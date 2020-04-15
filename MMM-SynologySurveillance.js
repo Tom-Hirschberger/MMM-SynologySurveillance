@@ -9,6 +9,7 @@ Module.register('MMM-SynologySurveillance', {
     addBigToNormal: true,
     showBigCamName: false,
     showCamName: false,
+    showUnreachableCams: true,
     urlRefreshInterval: 60,
     onlyRefreshIfUrlChanges: true,
     animationSpeed: 500,
@@ -139,59 +140,67 @@ Module.register('MMM-SynologySurveillance', {
         (typeof this.config.ds[curDsIdx].cams[curCamIdx].profiles === "undefined") ||
         (this.currentProfilePattern.test(this.config.ds[curDsIdx].cams[curCamIdx].profiles))
       ){
-        if(((curOrderIdx-skippedCams) % this.config.columns) == 0){
-          curRow = document.createElement("tr")
-            curRow.className = "row"
-          wrapper.appendChild(curRow)
-        }
-
-        var curCell = document.createElement("td")
-          curCell.className = "cell "+curDsIdx+"_"+curCamIdx+" "+curCamAlias
+        if( this.config.showUnreachableCams || 
+           ((typeof this.dsStreamInfo[curDsIdx] !== "undefined") &&
+           (typeof this.dsStreamInfo[curDsIdx][curCamName] !== "undefined"))
+        ){
+          if(((curOrderIdx-skippedCams) % this.config.columns) == 0){
+            curRow = document.createElement("tr")
+              curRow.className = "row"
+            wrapper.appendChild(curRow)
+          }
 
           if(!this.config.showOneBig || (curOrderIdx !== this.curBigIdx) || (this.config.dummyIcon === null)){
-            var camWrapper = document.createElement("div")
-              camWrapper.className = "camWrapper "+curDsIdx+"_"+curCamIdx+" "+curCamAlias
-              if(this.config.showOneBig){
-                camWrapper.addEventListener("click", ()=>{self.sendSocketNotification("SYNO_SS_CHANGE_CAM", {id: curOrderIdx})})
-              }
-
-              if(this.config.showCamName){
-                var camNameWrapper = document.createElement("span")
-                  camNameWrapper.className = "name"
-                  camNameWrapper.innerHTML = curCamAlias + "<br>"
-                camWrapper.appendChild(camNameWrapper)
-              }
-
-              var cam = document.createElement("img")
-                var camClass = "cam "+curDsIdx+"_"+curCamIdx+" "+curCamAlias
-                if((typeof this.dsStreamInfo[curDsIdx] !== "undefined") &&
-                  (typeof this.dsStreamInfo[curDsIdx][curCamName] !== "undefined")
-                ){
-                  cam.src = this.dsStreamInfo[curDsIdx][curCamName]
-                } else {
-                  cam.src = this.config.missingIconUrl
-                  camClass += " nourl"
+            var curCell = document.createElement("td")
+            curCell.className = "cell "+curDsIdx+"_"+curCamIdx+" "+curCamAlias
+              var camWrapper = document.createElement("div")
+                camWrapper.className = "camWrapper "+curDsIdx+"_"+curCamIdx+" "+curCamAlias
+                if(this.config.showOneBig){
+                  camWrapper.addEventListener("click", ()=>{self.sendSocketNotification("SYNO_SS_CHANGE_CAM", {id: curOrderIdx})})
                 }
-                cam.className = camClass
-              camWrapper.appendChild(cam)
-            curCell.appendChild(camWrapper)
+
+                if(this.config.showCamName){
+                  var camNameWrapper = document.createElement("span")
+                    camNameWrapper.className = "name"
+                    camNameWrapper.innerHTML = curCamAlias + "<br>"
+                  camWrapper.appendChild(camNameWrapper)
+                }
+
+                var cam = document.createElement("img")
+                  var camClass = "cam "+curDsIdx+"_"+curCamIdx+" "+curCamAlias
+                  if((typeof this.dsStreamInfo[curDsIdx] !== "undefined") &&
+                    (typeof this.dsStreamInfo[curDsIdx][curCamName] !== "undefined")
+                  ){
+                    cam.src = this.dsStreamInfo[curDsIdx][curCamName]
+                  } else {
+                    cam.src = this.config.missingIconUrl
+                    camClass += " nourl"
+                  }
+                  cam.className = camClass
+                camWrapper.appendChild(cam)
+              curCell.appendChild(camWrapper)
+            curRow.appendChild(curCell)
           } else {
             if(this.config.addBigToNormal){
-              var camWrapper = document.createElement("div")
-              camWrapper.className = "camWrapper currentBig "+curDsIdx+"_"+curCamIdx+" "+curCamAlias
-              var iconWrapper = document.createElement("span")
-                iconWrapper.className = "iconWrapper"
-                var icon = document.createElement("i")
-                  icon.className = "far fa-hand-point-up"
-                iconWrapper.appendChild(icon)
-              camWrapper.appendChild(iconWrapper)
+              var curCell = document.createElement("td")
+                curCell.className = "cell "+curDsIdx+"_"+curCamIdx+" "+curCamAlias
+                var camWrapper = document.createElement("div")
+                  camWrapper.className = "camWrapper currentBig "+curDsIdx+"_"+curCamIdx+" "+curCamAlias
+                  var iconWrapper = document.createElement("span")
+                    iconWrapper.className = "iconWrapper"
+                    var icon = document.createElement("i")
+                      icon.className = "far fa-hand-point-up"
+                  iconWrapper.appendChild(icon)
+                camWrapper.appendChild(iconWrapper)
               curCell.appendChild(camWrapper)
+              curRow.appendChild(curCell)
             } else {
               skippedCams += 1
             }
           }
-          
-        curRow.appendChild(curCell)
+        } else {
+          skippedCams += 1
+        }
       } else {
         skippedCams += 1
       }

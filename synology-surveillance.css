@@ -33,6 +33,15 @@
     min-height: var(--cam-height);
 }
 
+.camWrapper.nourl {
+    background-color: transparent;
+    border-radius: 0px;
+    width: var(--cam-width);
+    min-width: var(--cam-width);
+    height: var(--cam-height);
+    min-height: var(--cam-height);
+}
+
 .camWrapper .name {
     margin-top: 5px;
     line-height: 1em;
