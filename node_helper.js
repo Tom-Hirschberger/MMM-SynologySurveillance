@@ -24,7 +24,6 @@ module.exports = NodeHelper.create({
       var curDs = self.config.ds[curDsIdx]
       var curDsResult = {}
       var syno = new Syno({
-        idx: curDsIdx,
         protocol : curDs.protocol,
         host: curDs.host,
         port: curDs.port,
@@ -33,59 +32,61 @@ module.exports = NodeHelper.create({
         ignoreCertificateErrors: true
       })
 
-      console.log("Created DS with id: "+syno.idx+" and url: "+curDs.protocol+"://"+curDs.host+":"+curDs.port)
-      self.ds.push(syno)
+      syno.dsIdx = curDsIdx
 
-      syno.validCamNames = {}
+      console.log("Created DS with id: "+curDsIdx+" and url: "+curDs.protocol+"://"+curDs.host+":"+curDs.port)
+      self.ds[curDsIdx] = syno
+
+     validCamNames = {}
       for (var i = 0; i <curDs.cams.length; i++){
-        syno.validCamNames[curDs.cams[i].name] = i
+        validCamNames[curDs.cams[i].name] = i
       }
 
-      console.log("Valid Cam names: "+JSON.stringify(syno.validCamNames))
-      syno.ss.listCameras(function(error,data){
-        syno.idNameMap = {}
-        console.log("Getting list of cameras")
-        var cameras = data["cameras"]
-        for (var key in cameras){
-          syno.idNameMap[cameras[key]["id"]] = cameras[key]["newName"]
-          var idsNeeded = []
-          if(typeof syno.validCamNames[cameras[key]["newName"]] !== "undefined"){
-            idsNeeded.push(cameras[key]["id"])
-          }
-        }
-
-        console.log("Mapping the following ids to names: ")
-        console.log(JSON.stringify(syno.idNameMap))
-
-        var notFirst = false
-        var idString = ""
-        for(var curId in idsNeeded){
-          if(notFirst){
-            idString+=","
-          }
-
-          idString+=curId
-          notFirst = true;
-        }
-
+      var innerCallback = function(syno, curDsIdx, idsNeeded, idNameMap){
         syno.ss.getLiveViewPathCamera({'idList':idsNeeded}, function(liveViewError,liveViewData){
           if(typeof liveViewData !== "undefined"){
             for(var curResIdx in liveViewData){
               var curCamId = liveViewData[curResIdx]["id"]
-              var curCamName = syno.idNameMap[curCamId]
+              var curCamName = idNameMap[curCamId]
               curDsResult[curCamName] = liveViewData[curResIdx]["mjpegHttpPath"]
             }
-        
-            console.log("Send DS info of ds: "+syno.idx)
             self.sendSocketNotification("DS_STREAM_INFO",{
-              dsIdx: syno.idx,
+              dsIdx: curDsIdx,
               camStreams: curDsResult,
             })
           } else {
             console.log(JSON.stringify(liveViewError))
           }    
         });
-      })
+      }
+      
+      var outerCallback = function(syno, curDsIdx, validCamNames){
+        syno.ss.listCameras(function(error,data){
+          idNameMap = {}
+          var cameras = data["cameras"]
+          for (var key in cameras){
+            idNameMap[cameras[key]["id"]] = cameras[key]["newName"]
+            var idsNeeded = []
+            if(typeof validCamNames[cameras[key]["newName"]] !== "undefined"){
+              idsNeeded.push(cameras[key]["id"])
+            }
+          }
+  
+          var notFirst = false
+          var idString = ""
+          for(var curId in idsNeeded){
+            if(notFirst){
+              idString+=","
+            }
+  
+            idString+=curId
+            notFirst = true;
+          }
+  
+          innerCallback(syno, curDsIdx, idsNeeded, idNameMap)
+        })
+      }
+      outerCallback(syno, curDsIdx, validCamNames)
     }
   },
 
@@ -98,7 +99,7 @@ module.exports = NodeHelper.create({
     } else if (notification === "INIT_DS"){
       self.getStreamUrls(payload)
     } else if (notification === "REFRESH_COOKIE"){
-      for(var curDsIdx in this.ds){
+      for(var curDsIdx in Object.keys(this.ds)){
         this.ds[curDsIdx].dsm.getInfo(function(error,data){
           console.log("Refreshed cookie of ds with index "+curDs)
         })

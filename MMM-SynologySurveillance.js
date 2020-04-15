@@ -10,9 +10,6 @@ Module.register('MMM-SynologySurveillance', {
     return ['synology-surveillance.css'];
   },
 
-  /**
-   * Pseudo-constructor for our module. Sets the default current page to 0.
-   */
   start() {
     this.dsStreamInfo = []
 
@@ -21,9 +18,6 @@ Module.register('MMM-SynologySurveillance', {
     this.sendSocketNotification("INIT_DS")
   },
 
-  /**
-   * Render the cicles for each page, and highlighting the page we're on.
-   */
   getDom() {
     const self = this
     const wrapper = document.createElement("div")
@@ -33,18 +27,18 @@ Module.register('MMM-SynologySurveillance', {
     console.log(JSON.stringify(this.dsStreamInfo))
 
     for (var curDsIdx = 0; curDsIdx < this.config.ds.length; curDsIdx++){
-      console.log("Creating elements of ds with idx: "+curDsIdx)
       for(var curCamIdx = 0; curCamIdx < this.config.ds[curDsIdx].cams.length; curCamIdx++){
-        console.log("Creating elements of cam "+curCamIdx+" of ds "+curDsIdx)
         var curCamName = this.config.ds[curDsIdx].cams[curCamIdx].name
         var camWrapper = document.createElement("img")
+        var camWrapperClass = "camWrapper "+curDsIdx+"_"+curCamIdx
         if(typeof this.config.ds[curDsIdx].cams[curCamIdx].alias !== "undefined"){
-          camWrapper.className = "camWrapper "+this.config.ds[curDsIdx].cams[curCamIdx].alias
+          camWrapperClass += " "+this.config.ds[curDsIdx].cams[curCamIdx].alias
           camWrapper.alt = this.config.ds[curDsIdx].cams[curCamIdx].alias
         } else {
-          camWrapper.className = "camWrapper "+curCamName
+          camWrapperClass += " "+curCamName
           camWrapper.alt = curCamName
         }
+        camWrapper.className=camWrapperClass
 
         if(typeof this.dsStreamInfo[curDsIdx] !== "undefined"){
           if(typeof this.dsStreamInfo[curDsIdx][curCamName] !== "undefined"){

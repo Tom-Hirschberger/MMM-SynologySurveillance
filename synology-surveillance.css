@@ -1,0 +1,10 @@
+.synology-surveillance {
+    max-width: 400px;
+}
+.camWrapper {
+    width: 200px;
+}
+.camWrapper.Cam1 {
+    width: 400px;
+}
+
