@@ -82,6 +82,7 @@ Module.register('MMM-SynologySurveillance', {
   },
 
   getDom() {
+    const self = this
     const wrapper = document.createElement("table")
       wrapper.className = "synology-surveillance"
 
@@ -125,7 +126,7 @@ Module.register('MMM-SynologySurveillance', {
     }
 
     var skippedCams = 0;
-    for(var curOrderIdx = 0; curOrderIdx < this.order.length; curOrderIdx++){
+    for(let curOrderIdx = 0; curOrderIdx < this.order.length; curOrderIdx++){
       var curDsIdx = this.order[curOrderIdx][0]
       var curCamIdx = this.order[curOrderIdx][1]
       var curCamAlias = this.order[curOrderIdx][2]
@@ -142,6 +143,9 @@ Module.register('MMM-SynologySurveillance', {
         if(!this.config.showOneBig || (curOrderIdx !== this.curBigIdx) || (this.config.dummyIcon === null)){
           var camWrapper = document.createElement("div")
             camWrapper.className = "camWrapper "+curDsIdx+"_"+curCamIdx+" "+curCamAlias
+            if(this.config.showOneBig){
+              camWrapper.addEventListener("click", ()=>{self.sendSocketNotification("SYNO_SS_CHANGE_CAM", {id: curOrderIdx})})
+            }
 
             if(this.config.showCamName){
               var camNameWrapper = document.createElement("span")
@@ -185,16 +189,42 @@ Module.register('MMM-SynologySurveillance', {
     return wrapper;
   },
 
+  getNextCamId: function(curCamId, type=1){
+    var nextCamId = curCamId
+    if(type === 1){
+      nextCamId = curCamId + 1
+      if(nextCamId >= this.order.length){
+        nextCamId = 0
+      }
+    } else if(type === -1){
+      nextCamId = curCamId - 1
+      if(nextCamId < 0){
+        nextCamId = this.order.length - 1
+      }
+    }
+
+    return nextCamId
+  },
+
   notificationReceived: function(notification,payload) {
-    if(notification === "CHANGED_PROFILE") {
-      this.sendSocketNotification(notification,payload)
+    if(notification === "SYNO_SS_NEXT_CAM"){
+      this.curBigIdx = this.getNextCamId(this.curBigIdx, 1)
+      this.updateDom()
+    } else if (notification === "SYNO_SS_PREVIOUS_CAM"){
+      this.curBigIdx = this.getNextCamId(this.curBigIdx, -1)
+      this.updateDom()
+    } else if (notification === "SYNO_SS_CHANGE_CAM"){
+      console.log("Got notification to change cam to: "+payload.id)
+      if(typeof this.order[payload.id] !== "undefined"){
+        this.curBigIdx = this.payload.id
+        this.updateDom()
+      }
     }
   },
 
   socketNotificationReceived: function (notification, payload) {
     if(notification === "DS_STREAM_INFO"){
       console.log("Got new Stream info of ds with id: "+payload.dsIdx)
-
       if(typeof this.dsStreamInfo[payload.dsIdx] !== "undefined") {
         for(var curKey in Object.keys(this.dsStreamInfo[payload.dsIdx])){
           if(this.dsStreamInfo[payload.dsIdx][curKey] !== payload.camStreams[curKey]){
@@ -213,6 +243,12 @@ Module.register('MMM-SynologySurveillance', {
         }
       } else {
         this.dsStreamInfo[payload.dsIdx] = payload.camStreams
+        this.updateDom()
+      }
+    } else if (notification === "SYNO_SS_CHANGE_CAM"){
+      console.log("Got notification to change cam to: "+payload.id)
+      if(typeof this.order[payload.id] !== "undefined"){
+        this.curBigIdx = payload.id
         this.updateDom()
       }
     }
