@@ -2,6 +2,7 @@ Module.register('MMM-SynologySurveillance', {
 
   defaults: {
     ds: [],
+    columns: 2,
     order: null,
     missingIconUrl: "./MMM-SynologySurveillance/camera_icon.svg",
     showOneBig: true,
@@ -22,7 +23,7 @@ Module.register('MMM-SynologySurveillance', {
     this.order = []
     this.curBigIdx = 0
 
-    if(typeof this.config.order !== "undefined"){
+    if(this.config.order !== null){
       var nameDsCamIdxMap = {}
       for (var curDsIdx = 0; curDsIdx < this.config.ds.length; curDsIdx++){
         for(var curCamIdx = 0; curCamIdx < this.config.ds[curDsIdx].cams.length; curCamIdx++){
@@ -68,6 +69,8 @@ Module.register('MMM-SynologySurveillance', {
   getDom() {
     console.log("Current order: ")
     console.log(JSON.stringify(this.order, null , 2))
+    console.log("Current URLs: ")
+    console.log(JSON.stringify(this.dsStreamInfo, null , 2))
     const wrapper = document.createElement("table")
       wrapper.className = "synology-surveillance"
 
@@ -151,8 +154,11 @@ Module.register('MMM-SynologySurveillance', {
         } else {
           var camWrapper = document.createElement("div")
             camWrapper.className = "camWrapper currentBig "+curDsIdx+"_"+curCamIdx+" "+curCamAlias
-            var iconWrapper = document.createElement("i")
-              iconWrapper.className = "far fa-hand-point-up"
+            var iconWrapper = document.createElement("span")
+              iconWrapper.className = "iconWrapper"
+              var icon = document.createElement("i")
+                icon.className = "far fa-hand-point-up"
+              iconWrapper.appendChild(icon)
             camWrapper.appendChild(iconWrapper)
           curCell.appendChild(camWrapper)
         }

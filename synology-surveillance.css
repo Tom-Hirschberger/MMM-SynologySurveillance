@@ -2,12 +2,31 @@
     line-height: 0px;
     max-width: 400px;
     --cam-width: 200px;
-    --cam-big-width: calc(var(--cam-width)*1.5);
-    --dummy-height: calc(var(--cam-width)*0.6);
+    --cam-height: calc(var(--cam-width)/1.33);
+    --cam-big-width: calc(var(--cam-width)*1.7);
+    --cam-big-height: calc(var(--cam-big-width)/1.33);
 }
 
 .synology-surveillance .row {
   text-align: center;
+}
+
+.camWrapper {
+    padding: 5px;
+    margin: 2px;
+    background-color:#302f2d;
+    border-radius: 5px;
+}
+
+.camWrapper.big {
+    margin-left: auto;
+    margin-right: auto;
+    width: fit-content;
+}
+
+.camWrapper.currentBig {
+    background-color: transparent;
+    border-radius: 0px;
 }
 
 .camWrapper .name {
@@ -17,20 +36,19 @@
 
 .camWrapper .cam {
     width: var(--cam-width);
-    height: auto;
+    max-width: var(--cam-width);
+    height: var(--cam-height);
+    max-height: var(--cam-height);
     padding: 5px;
     margin: 2px;
     background-color:#302f2d;
     border-radius: 5px;
 }
 
-.camWrapper .cam.nourl {
-    min-height: var(--dummy-height);
-    height: 100%;
-}
-
-
 .camWrapper.big .cam {
     width: var(--cam-big-width);
+    max-width: var(--cam-big-width);
+    height: var(--cam-big-height);
+    max-height: var(--cam-big-height);
 }
 
