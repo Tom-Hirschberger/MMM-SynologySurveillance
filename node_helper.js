@@ -18,7 +18,7 @@ module.exports = NodeHelper.create({
     self.ds = []
     var result = []
 
-    console.log("Creating "+self.config.ds.length+" DiskStation(s)")
+    // console.log("Creating "+self.config.ds.length+" DiskStation(s)")
 
     for(var curDsIdx = 0; curDsIdx < self.config.ds.length; curDsIdx++) {
       var curDs = self.config.ds[curDsIdx]
@@ -34,7 +34,7 @@ module.exports = NodeHelper.create({
 
       syno.dsIdx = curDsIdx
 
-      console.log("Created DS with id: "+curDsIdx+" and url: "+curDs.protocol+"://"+curDs.host+":"+curDs.port)
+      // console.log("Created DS with id: "+curDsIdx+" and url: "+curDs.protocol+"://"+curDs.host+":"+curDs.port)
       self.ds[curDsIdx] = syno
 
      validCamNames = {}
@@ -103,13 +103,10 @@ module.exports = NodeHelper.create({
       self.config = payload
       self.started = true
     } else if (notification === "INIT_DS"){
-      self.getStreamUrls(payload)
-    } else if (notification === "REFRESH_COOKIE"){
-      for(var curDsIdx in Object.keys(this.ds)){
-        this.ds[curDsIdx].dsm.getInfo(function(error,data){
-          console.log("Refreshed cookie of ds with index "+curDs)
-        })
-      }
+      self.getStreamUrls()
+    } else if (notification === "REFRESH_URLS"){
+      console.log(this.name + ': Refreshing the urls!')
+      self.getStreamUrls()
     }
   }
 })

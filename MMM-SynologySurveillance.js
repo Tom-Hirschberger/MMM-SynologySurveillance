@@ -6,8 +6,11 @@ Module.register('MMM-SynologySurveillance', {
     order: null,
     missingIconUrl: "./MMM-SynologySurveillance/camera_icon.svg",
     showOneBig: true,
+    addBigToNormal: true,
     showBigCamName: false,
     showCamName: false,
+    urlRefreshInterval: 60,
+    onlyRefreshIfUrlChanges: true,
   },
 
   /**
@@ -32,7 +35,7 @@ Module.register('MMM-SynologySurveillance', {
           } else {
             var curCamName = this.config.ds[curDsIdx].cams[curCamIdx].name
           }
-          console.log("Mapping cam name: "+curCamName+" to ds "+curDsIdx+" and cam id "+curCamIdx)
+          // console.log("Mapping cam name: "+curCamName+" to ds "+curDsIdx+" and cam id "+curCamIdx)
           nameDsCamIdxMap[curCamName] = [curDsIdx,curCamIdx]
         }
       }
@@ -41,11 +44,12 @@ Module.register('MMM-SynologySurveillance', {
         var curOrderName = this.config.order[curOrderIdx]
         if(typeof nameDsCamIdxMap[curOrderName] !== "undefined"){
           var curRes = [nameDsCamIdxMap[curOrderName][0], nameDsCamIdxMap[curOrderName][1], curOrderName]
-          console.log("Pushing to order (special): "+JSON.stringify(curRes))
+          // console.log("Pushing to order (special): "+JSON.stringify(curRes))
           this.order.push(curRes)
-        } else {
-          console.log("Skipping unknown cam: "+curOrderName)
-        }
+        } 
+        // else {
+        //   console.log("Skipping unknown cam: "+curOrderName)
+        // }
       }
     } else {
       for (var curDsIdx = 0; curDsIdx < this.config.ds.length; curDsIdx++){
@@ -56,7 +60,7 @@ Module.register('MMM-SynologySurveillance', {
             var curCamName = this.config.ds[curDsIdx].cams[curCamIdx].name
           }
           var curRes = [curDsIdx, curCamIdx, curCamName]
-          console.log("Pushing to order (regular): "+JSON.stringify(curRes))
+          // console.log("Pushing to order (regular): "+JSON.stringify(curRes))
           this.order.push([curDsIdx, curCamIdx, curCamName])
         }
       }
@@ -64,13 +68,20 @@ Module.register('MMM-SynologySurveillance', {
 
     this.sendSocketNotification('CONFIG', this.config);
     this.sendSocketNotification("INIT_DS")
+
+    setTimeout(()=>{
+      this.sendRefreshUrlRequestAndResetTimer()
+    }, this.config.urlRefreshInterval * 1000)
+  },
+
+  sendRefreshUrlRequestAndResetTimer(){
+    this.sendSocketNotification("REFRESH_URLS")
+    setTimeout(()=>{
+      this.sendRefreshUrlRequestAndResetTimer()
+    }, this.config.urlRefreshInterval * 1000)
   },
 
   getDom() {
-    console.log("Current order: ")
-    console.log(JSON.stringify(this.order, null , 2))
-    console.log("Current URLs: ")
-    console.log(JSON.stringify(this.dsStreamInfo, null , 2))
     const wrapper = document.createElement("table")
       wrapper.className = "synology-surveillance"
 
@@ -113,12 +124,13 @@ Module.register('MMM-SynologySurveillance', {
       }
     }
 
+    var skippedCams = 0;
     for(var curOrderIdx = 0; curOrderIdx < this.order.length; curOrderIdx++){
       var curDsIdx = this.order[curOrderIdx][0]
       var curCamIdx = this.order[curOrderIdx][1]
       var curCamAlias = this.order[curOrderIdx][2]
       var curCamName = this.config.ds[curDsIdx].cams[curCamIdx].name
-      if((curOrderIdx % this.config.columns) == 0){
+      if(((curOrderIdx-skippedCams) % this.config.columns) == 0){
         curRow = document.createElement("tr")
           curRow.className = "row"
         wrapper.appendChild(curRow)
@@ -127,7 +139,7 @@ Module.register('MMM-SynologySurveillance', {
       var curCell = document.createElement("td")
         curCell.className = "cell "+curDsIdx+"_"+curCamIdx+" "+curCamAlias
 
-        if((curOrderIdx !== this.curBigIdx) || (this.config.dummyIcon === null)){
+        if(!this.config.showOneBig || (curOrderIdx !== this.curBigIdx) || (this.config.dummyIcon === null)){
           var camWrapper = document.createElement("div")
             camWrapper.className = "camWrapper "+curDsIdx+"_"+curCamIdx+" "+curCamAlias
 
@@ -152,7 +164,8 @@ Module.register('MMM-SynologySurveillance', {
             camWrapper.appendChild(cam)
           curCell.appendChild(camWrapper)
         } else {
-          var camWrapper = document.createElement("div")
+          if(this.config.addBigToNormal){
+            var camWrapper = document.createElement("div")
             camWrapper.className = "camWrapper currentBig "+curDsIdx+"_"+curCamIdx+" "+curCamAlias
             var iconWrapper = document.createElement("span")
               iconWrapper.className = "iconWrapper"
@@ -160,7 +173,10 @@ Module.register('MMM-SynologySurveillance', {
                 icon.className = "far fa-hand-point-up"
               iconWrapper.appendChild(icon)
             camWrapper.appendChild(iconWrapper)
-          curCell.appendChild(camWrapper)
+            curCell.appendChild(camWrapper)
+          } else {
+            skippedCams += 1
+          }
         }
         
       curRow.appendChild(curCell)
@@ -178,8 +194,27 @@ Module.register('MMM-SynologySurveillance', {
   socketNotificationReceived: function (notification, payload) {
     if(notification === "DS_STREAM_INFO"){
       console.log("Got new Stream info of ds with id: "+payload.dsIdx)
-      this.dsStreamInfo[payload.dsIdx] = payload.camStreams
-      this.updateDom()
+
+      if(typeof this.dsStreamInfo[payload.dsIdx] !== "undefined") {
+        for(var curKey in Object.keys(this.dsStreamInfo[payload.dsIdx])){
+          if(this.dsStreamInfo[payload.dsIdx][curKey] !== payload.camStreams[curKey]){
+            this.dsStreamInfo[payload.dsIdx] = payload.camStreams
+            this.updateDom()
+            break
+          }
+        }
+
+        for(var curKey in payload.camStreams){
+          if(this.dsStreamInfo[payload.dsIdx][curKey] !== payload.camStreams[curKey]){
+            this.dsStreamInfo[payload.dsIdx] = payload.camStreams
+            this.updateDom()
+            break
+          }
+        }
+      } else {
+        this.dsStreamInfo[payload.dsIdx] = payload.camStreams
+        this.updateDom()
+      }
     }
   },
 
