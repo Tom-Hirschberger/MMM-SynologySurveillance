@@ -6,7 +6,7 @@ Module.register('MMM-SynologySurveillance', {
     order: null,
     missingIconUrl: "./MMM-SynologySurveillance/camera_icon.svg",
     showOneBig: true,
-    addBigToNormal: true,
+    addBigToNormal: false,
     showBigCamName: false,
     showCamName: false,
     showUnreachableCams: true,
