@@ -44,6 +44,9 @@ module.exports = NodeHelper.create({
 
       var innerCallback = function(syno, curDsIdx, idsNeeded, idNameMap){
         syno.ss.getLiveViewPathCamera({'idList':idsNeeded}, function(liveViewError,liveViewData){
+          // console.log("curDsIdx: "+JSON.stringify(curDsIdx))
+          // console.log("isNeeded: "+JSON.stringify(idsNeeded))
+          // console.log("idNameMap: "+JSON.stringify(idNameMap))
           if(typeof liveViewData !== "undefined"){
             for(var curResIdx in liveViewData){
               var curCamId = liveViewData[curResIdx]["id"]
@@ -61,29 +64,32 @@ module.exports = NodeHelper.create({
       }
       
       var outerCallback = function(syno, curDsIdx, validCamNames){
+        console.log("ValidCamNames of idx: "+curDsIdx+" :"+JSON.stringify(validCamNames))
         syno.ss.listCameras(function(error,data){
-          idNameMap = {}
-          var cameras = data["cameras"]
-          for (var key in cameras){
-            idNameMap[cameras[key]["id"]] = cameras[key]["newName"]
-            var idsNeeded = []
-            if(typeof validCamNames[cameras[key]["newName"]] !== "undefined"){
-              idsNeeded.push(cameras[key]["id"])
+          if(typeof data !== "undefined"){
+            idNameMap = {}
+            var cameras = data["cameras"]
+            for (var key in cameras){
+              idNameMap[cameras[key]["id"]] = cameras[key]["newName"]
+              var idsNeeded = []
+              if(typeof validCamNames[cameras[key]["newName"]] !== "undefined"){
+                idsNeeded.push(cameras[key]["id"])
+              }
             }
-          }
-  
-          var notFirst = false
-          var idString = ""
-          for(var curId in idsNeeded){
-            if(notFirst){
-              idString+=","
+    
+            var notFirst = false
+            var idString = ""
+            for(var curId in idsNeeded){
+              if(notFirst){
+                idString+=","
+              }
+    
+              idString+=curId
+              notFirst = true;
             }
-  
-            idString+=curId
-            notFirst = true;
+    
+            innerCallback(syno, curDsIdx, idsNeeded, idNameMap)
           }
-  
-          innerCallback(syno, curDsIdx, idsNeeded, idNameMap)
         })
       }
       outerCallback(syno, curDsIdx, validCamNames)
