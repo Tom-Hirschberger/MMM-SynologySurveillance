@@ -42,12 +42,15 @@ module.exports = NodeHelper.create({
         validCamNames[curDs.cams[i].name] = i
       }
 
-      var innerCallback = function(syno, curDsIdx, idsNeeded, idNameMap){
-        syno.ss.getLiveViewPathCamera({'idList':idsNeeded}, function(liveViewError,liveViewData){
+      var innerCallback = function(syno, curDsIdx, idString, idNameMap){
+        // console.log("Quering for urls of cams: "+idString)
+        syno.ss.getLiveViewPathCamera({'idList':idString}, function(liveViewError,liveViewData){
           // console.log("curDsIdx: "+JSON.stringify(curDsIdx))
           // console.log("isNeeded: "+JSON.stringify(idsNeeded))
           // console.log("idNameMap: "+JSON.stringify(idNameMap))
           if(typeof liveViewData !== "undefined"){
+            // console.log("Got url info of DS with id: "+curDsIdx)
+            // console.log(JSON.stringify(liveViewData,null,2))
             for(var curResIdx in liveViewData){
               var curCamId = liveViewData[curResIdx]["id"]
               var curCamName = idNameMap[curCamId]
@@ -64,31 +67,27 @@ module.exports = NodeHelper.create({
       }
       
       var outerCallback = function(syno, curDsIdx, validCamNames){
-        console.log("ValidCamNames of idx: "+curDsIdx+" :"+JSON.stringify(validCamNames))
+        console.log("Updating information of DS with idx: "+curDsIdx)
+        // console.log("ValidCamNames of idx: "+curDsIdx+" :"+JSON.stringify(validCamNames))
         syno.ss.listCameras(function(error,data){
           if(typeof data !== "undefined"){
             idNameMap = {}
             var cameras = data["cameras"]
-            for (var key in cameras){
-              idNameMap[cameras[key]["id"]] = cameras[key]["newName"]
-              var idsNeeded = []
-              if(typeof validCamNames[cameras[key]["newName"]] !== "undefined"){
-                idsNeeded.push(cameras[key]["id"])
-              }
-            }
-    
             var notFirst = false
             var idString = ""
-            for(var curId in idsNeeded){
-              if(notFirst){
-                idString+=","
+            for (var key in cameras){
+              idNameMap[cameras[key]["id"]] = cameras[key]["newName"]
+              if(typeof validCamNames[cameras[key]["newName"]] !== "undefined"){
+                if(notFirst){
+                  idString+=","
+                }
+      
+                idString+=cameras[key]["id"]
+                notFirst = true;
               }
-    
-              idString+=curId
-              notFirst = true;
             }
     
-            innerCallback(syno, curDsIdx, idsNeeded, idNameMap)
+            innerCallback(syno, curDsIdx, idString, idNameMap)
           }
         })
       }
