@@ -16,7 +16,7 @@ Attention: The "mpjeg" streams provide worse quality than the rtsp streams but d
 ## Installation
 	cd ~/MagicMirror/modules
     git clone https://github.com/Tom-Hirschberger/MMM-SynologySurveillance.git
-    cd MMM-MplayerRadio
+    cd MMM-SynologySurveillance
     npm install
 
 
@@ -34,7 +34,7 @@ Attention: The "mpjeg" streams provide worse quality than the rtsp streams but d
 				showUnreachableCams: true,
 				ds: [
 					{
-						protocol: "http",
+						protocol: "https",
 						host: "mydiskstation",
 						port: "5000",
 						user: "dummy",
