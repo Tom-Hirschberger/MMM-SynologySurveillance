@@ -17,7 +17,7 @@ Because the module uses Flexbox Layout instead of Tables there is a lot of css s
 ![alt text](https://github.com/Tom-Hirschberger/MMM-SynologySurveillance/raw/master/examples/screenshot-horizontal.png "Horizontal Layout")
 
 ### Vertical Layout ###
-![alt text](https://github.com/Tom-Hirschberger/MMM-SynologySurveillance/raw/master/examples/screenshot-horizontal.png "Horizontal Layout")
+![alt text](https://github.com/Tom-Hirschberger/MMM-SynologySurveillance/raw/master/examples/screenshot-vertical.png "Vertical Layout")
 
 
 ## Installation
