@@ -1,0 +1,75 @@
+.synology-surveillance {
+    --column-cnt: 2;
+    --cam-bg-color: #2b2c30;
+    --cam-name-bg-color: #1b1b1c;
+    --cam-wrapper-border-radius: 5px;
+    --cam-border-radius: 5px;
+    --name-border-radius: 5px;
+    --padding-camWrapper: 5px;
+    --cam-width: 200px;
+    --cam-min-height: calc(var(--cam-width) /1.33);
+
+    --cam-big-width: calc(var(--cam-width)*var(--column-cnt));
+    --cam-big-wrapper-width: calc(var(--cam-big-width) + calc(var(--padding-camWrapper)*var(--column-cnt)));
+    --cam-big-min-height: calc(var(--cam-big-width) /1.33);
+
+    --icon-size: 50px;
+    --icon-postion: calc(var(--cam-min-height)/2 - 25px);
+    --icon-big-position: calc(calc(var(--cam-big-min-height)/2) - 25px);
+
+    --width-noSpace: calc(var(--cam-width) * var(--column-cnt));
+
+    width: calc(calc(calc(var(--column-cnt) * 3)*var(--padding-camWrapper)) + var(--width-noSpace));
+
+    justify-content: space-evenly;
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.camWrapper {
+    background-color: var(--cam-bg-color);
+    border-radius: var(--cam-wrapper-border-radius);
+    padding: var(--padding-camWrapper);
+    margin-bottom:5px;
+}
+
+.camWrapper .name {
+    width: 100%;
+    background-color: var(--cam-name-bg-color);
+    border-radius: var(--name-border-radius);
+    margin-bottom: 5px;
+}
+
+.innerCamWrapper {
+    margin: auto;
+    display: block;
+    width: var(--cam-width);
+    min-width: var(--cam-width);
+    min-height: var(--cam-min-height);
+}
+
+.innerCamWrapper.big {
+    margin: auto;
+    display: block;
+    min-width: var(--cam-big-wrapper-width);
+    min-height: var(--cam-big-min-height);
+}
+
+.cam {
+    border-radius: var(--cam-border-radius);
+    max-width: 100%;
+    margin: auto;
+    display: block;
+}
+
+.cam.nourl, .cam.currentBig{
+    min-height: 100%;
+    font-size: var(--icon-size);
+    position:relative; 
+    top:var(--icon-postion);
+}
+
+.cam.nourl.big {
+    top:var(--icon-big-postion);
+}
