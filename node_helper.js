@@ -103,7 +103,7 @@ module.exports = NodeHelper.create({
       self.started = true
     } else if (notification === "INIT_DS"){
       self.getStreamUrls()
-    } else if (notification === "REFRESH_URLS"){
+    } else if ((notification === "REFRESH_URLS") && self.started){
       console.log(this.name + ': Refreshing the urls!')
       self.getStreamUrls()
     } else if (notification === "SYNO_SS_CHANGE_CAM"){

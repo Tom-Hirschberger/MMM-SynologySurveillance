@@ -10,8 +10,15 @@ The urls of the cams will be refreshed preiodically.
 
 Attention: The "mpjeg" streams provide worse quality than the rtsp streams but displaying the rtsp streams is much more and needs some extra tools installed on the pi. If you search for an rtsp module try: https://github.com/shbatm/MMM-RTSPStream.
 
+Because the module uses Flexbox Layout instead of Tables there is a lot of css styling possiblity.
+
 ## Screenshots ##
-![alt text](https://github.com/Tom-Hirschberger/MMM-SynologySurveillance/raw/master/examples/withBigAndUnreachable.png "Reachable, unreachable and big view of cams")
+### Horizontal Layout ###
+![alt text](https://github.com/Tom-Hirschberger/MMM-SynologySurveillance/raw/master/examples/screenshot-horizontal.png "Horizontal Layout")
+
+### Vertical Layout ###
+![alt text](https://github.com/Tom-Hirschberger/MMM-SynologySurveillance/raw/master/examples/screenshot-horizontal.png "Horizontal Layout")
+
 
 ## Installation
 	cd ~/MagicMirror/modules
@@ -26,12 +33,12 @@ Attention: The "mpjeg" streams provide worse quality than the rtsp streams but d
 			module: "MMM-SynologySurveillance",
 			position: "top_bar",
 			config: {
-				columns: 2,
 				showOneBig: true,
 				addBigToNormal: false,
 				showCamName: false,
 				showBigCamName: false,
 				showUnreachableCams: true,
+				vertical: true,
 				ds: [
 					{
 						protocol: "https",
@@ -55,7 +62,7 @@ Attention: The "mpjeg" streams provide worse quality than the rtsp streams but d
 | Option  | Description | Type | Default |
 | ------- | --- | --- | --- |
 | ds | The array containing the information about the discstations and cams | Array | [] |
-| columns | How many columns should be used to arange the small views of the cams | Integer | 2 |
+| vertical | Should the vertical or horizontal layout be used? | Boolean | true |
 | showOneBig | If this option is true an extra big view of the first cam is displayed at the beginning | Boolean | true |
 | addBigToNormal | If this option is true an icon will be displayed in the small views while the cam is visible in the big view | Boolean | false |
 | showBigCamName | Should the name of the cam that is displayed in the big view added to the big view | Boolean | false |
