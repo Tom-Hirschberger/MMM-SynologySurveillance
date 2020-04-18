@@ -46,6 +46,7 @@ Because the module uses Flexbox Layout instead of Tables there is a lot of css s
 						port: "5000",
 						user: "dummy",
 						password: "dummy123",
+						replaceHostPart: true,
 						cams: [
 							{
 								alias: "Cam1",
@@ -81,6 +82,7 @@ Because the module uses Flexbox Layout instead of Tables there is a lot of css s
 | user | The username to login to the diskstation | true |
 | password | The password used for the login | true |
 | cams | The array containing the information about the cams to query | true |
+| replaceHostPart | If this option is set to true the host and protocol part in the stream url will be replaced with the values of the config file. I introduce this option because i access my cam with an public url (dynamic dns) but the disk station returns the private ip of the camera in the result. | Boolean | false |
 
 ### Cams ###
 | Option  | Description | Type |
