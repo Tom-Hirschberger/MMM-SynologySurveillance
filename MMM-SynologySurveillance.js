@@ -30,6 +30,7 @@ Module.register('MMM-SynologySurveillance', {
 
   start() {
     this.dsStreamInfo = []
+    this.dsPresetInfo = {}
     Log.info("Starting module: " + this.name);
     this.order = []
     this.curBigIdx = 0
@@ -39,7 +40,9 @@ Module.register('MMM-SynologySurveillance', {
     if(this.config.order !== null){
       var nameDsCamIdxMap = {}
       for (var curDsIdx = 0; curDsIdx < this.config.ds.length; curDsIdx++){
+        this.dsPresetInfo[curDsIdx] = {}
         for(var curCamIdx = 0; curCamIdx < this.config.ds[curDsIdx].cams.length; curCamIdx++){
+          this.dsPresetInfo[curDsIdx][this.config.ds[curDsIdx].cams[curCamIdx].name] = {}
           if(typeof this.config.ds[curDsIdx].cams[curCamIdx].alias !== "undefined"){
             var curCamName = this.config.ds[curDsIdx].cams[curCamIdx].alias
           } else {
@@ -63,7 +66,9 @@ Module.register('MMM-SynologySurveillance', {
       }
     } else {
       for (var curDsIdx = 0; curDsIdx < this.config.ds.length; curDsIdx++){
+        this.dsPresetInfo[curDsIdx] = {}
         for(var curCamIdx = 0; curCamIdx < this.config.ds[curDsIdx].cams.length; curCamIdx++){
+          this.dsPresetInfo[curDsIdx][this.config.ds[curDsIdx].cams[curCamIdx].name] = {}
           if(typeof this.config.ds[curDsIdx].cams[curCamIdx].alias !== "undefined"){
             var curCamName = this.config.ds[curDsIdx].cams[curCamIdx].alias
           } else {

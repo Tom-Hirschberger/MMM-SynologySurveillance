@@ -10,12 +10,11 @@ module.exports = NodeHelper.create({
 
   start: function () {
     this.started = false
-    this.ds = []
+    this.ds = {}
   },
 
   getStreamUrls: function(){
     const self = this
-    self.ds = []
     let result = []
 
     // console.log("Creating "+self.config.ds.length+" DiskStation(s)")
@@ -35,7 +34,8 @@ module.exports = NodeHelper.create({
       syno.dsIdx = curDsIdx
 
       // console.log("Created DS with id: "+curDsIdx+" and url: "+curDs.protocol+"://"+curDs.host+":"+curDs.port)
-      self.ds[curDsIdx] = syno
+      self.ds[curDsIdx] = {}
+      self.ds[curDsIdx].syno = syno
 
       let validCamNames = {}
       for (let i = 0; i <curDs.cams.length; i++){
@@ -58,10 +58,29 @@ module.exports = NodeHelper.create({
               if(notFirst){
                 idString+=","
               }
-      
               idString+=cameras[key]["id"]
               notFirst = true;
             }
+          }
+
+          self.ds[curDsIdx].idNameMap = idNameMap
+
+          self.ds[curDsIdx].ptzPresetInfo = {}
+          for(let curCamId in idNameMap){
+            self.ds[curDsIdx].ptzPresetInfo[curCamId] = []
+            syno.ss.listPresetPtz({'cameraId':curCamId}, function(ptzError,ptzData){
+              console.log("CurDS: "+curDsIdx+" curCamId: "+curCamId+": "+JSON.stringify(ptzData,null,2))
+
+              if(typeof ptzData !== "undefined"){
+                self.ds[curDsIdx].ptzPresetInfo[curCamId] = ptzData.presets
+                self.sendSocketNotification("DS_PTZ_PRESET_INFO", {
+                  dsIdx: curDsIdx,
+                  curCamId: curCamId,
+                  camName: idNameMap[curCamId],
+                  ptzData: ptzData.presets
+                })
+              }
+            })
           }
     
           syno.ss.getLiveViewPathCamera({'idList':idString}, function(liveViewError,liveViewData){
@@ -108,6 +127,15 @@ module.exports = NodeHelper.create({
     }
   },
 
+  goPosition: function(dsIdx, camId, position){
+    const self = this
+    if((typeof self.ds[dsIdx] !== "undefined") && (typeof self.ds[dsIdx].ptzPresetInfo !== "undefined")&& (typeof self.ds[dsIdx].ptzPresetInfo[camId] !== "undefined")){
+      if((position >= 0) && (position < Object.keys(self.ds[dsIdx].ptzPresetInfo[camId]).length)){
+        self.ds[dsIdx].syno.ss.goPresetPtz({'cameraId':camId, 'position':position}, function(goPtzError,goPtzData){})
+      }
+    }
+  },
+
   socketNotificationReceived: function (notification, payload) {
     const self = this
     console.log(self.name + ": Received notification "+notification)
@@ -121,6 +149,8 @@ module.exports = NodeHelper.create({
       self.getStreamUrls()
     } else if (notification === "SYNO_SS_CHANGE_CAM"){
       self.sendSocketNotification(notification,payload)
+    } else if (notification === "SYNO_SS_CHANGE_POSITION"){
+      self.goPosition(payload.dsIdx, payload.camId, payload.position)
     }
   }
 })
