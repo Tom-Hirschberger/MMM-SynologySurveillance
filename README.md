@@ -19,6 +19,8 @@ Because the module uses Flexbox Layout instead of Tables there is a lot of css s
 ### Vertical Layout ###
 ![alt text](https://github.com/Tom-Hirschberger/MMM-SynologySurveillance/raw/master/examples/screenshot-vertical.png "Vertical Layout")
 
+![alt text](https://github.com/Tom-Hirschberger/MMM-SynologySurveillance/raw/master/examples/screenshot-vertical-positions.png "Vertical Layout with positions")
+
 
 ## Installation
 	cd ~/MagicMirror/modules
