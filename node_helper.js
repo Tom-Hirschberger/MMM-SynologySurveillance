@@ -71,7 +71,7 @@ module.exports = NodeHelper.create({
           for(let curCamId in idNameMap){
             self.ds[curDsIdx].ptzPresetInfo[curCamId] = []
             syno.ss.listPresetPtz({'cameraId':curCamId}, function(ptzError,ptzData){
-              console.log("CurDS: "+curDsIdx+" curCamId: "+curCamId+": "+JSON.stringify(ptzData,null,2))
+              // console.log("CurDS: "+curDsIdx+" curCamId: "+curCamId+": "+JSON.stringify(ptzData,null,2))
 
               if(typeof ptzData !== "undefined"){
                 self.ds[curDsIdx].ptzPresetInfo[curCamId] = ptzData.presets
@@ -113,7 +113,7 @@ module.exports = NodeHelper.create({
                 camStreams: curDsResult,
               }
     
-              console.log(JSON.stringify(curPayload,null,2))
+              // console.log(JSON.stringify(curPayload,null,2))
     
               self.urlUpdateInProgress = false
               self.sendSocketNotification("DS_STREAM_INFO",curPayload)
