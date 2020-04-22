@@ -38,6 +38,8 @@ Because the module uses Flexbox Layout instead of Tables there is a lot of css s
 				showCamName: false,
 				showBigCamName: false,
 				showUnreachableCams: true,
+				showPositions: true,
+				showBigPositions: true,
 				vertical: true,
 				ds: [
 					{
@@ -70,6 +72,8 @@ Because the module uses Flexbox Layout instead of Tables there is a lot of css s
 | showCamName | Should the name of each cam be added the the small view | Boolean | false |
 | showUnreachableCams | Should cams we can not query the video url of being displayed | Boolean | true |
 | order | An string containing the names or alias (if you use the same cam name in different stations use the alias) of the cams in the order they should be displayed. If no order is provided the order of the diskstations and cams in the configuration is used. | String | null |
+| showPositions | If set to true saved positions for this cam will be added as buttons; You can either click them or send an notification to change to this position | Boolean | true |
+| showBigPositions | If set to true the saved positions of the current big cam will be displayed as buttons; You can either click them or change the positions by notification | Boolean | true |
 | urlRefreshInterval | The module connects periodically to the discstations to get the current urls (and refreshes the authentication cookie). This option controls the interval (seconds) | Integer | 60 |
 | onlyRefreshIfUrlChanges | Only if some of the urls of the currently visable cams (also the unreachable ones) changed the view is being refreshed if this value is set to true. | Boolean | true |
 | animationSpeed | The refresh of the view can be animated. This options controls the animation speed (milliseconds) | Integer | 500 |
@@ -98,3 +102,6 @@ Because the module uses Flexbox Layout instead of Tables there is a lot of css s
 | SYNO_SS_NEXT_CAM | nothing | Switch to the next cam in the order in the big view |
 | SYNO_SS_PREVIOUS_CAM | nothing | Switch to the previous cam in the order in the big view |
 | SYNO_SS_CHANGE_CAM | id | Switch to the cam with the specific id. The id is either the one of the position in the order string or if no order string is used the position in the config (starting with 0) |
+| SYNO_SS_NEXT_POSITION | nothing or dsIdx = index of the datastation in the configuration; camName = the name of the cam as in the configuration| The cam will with the specified id and name will be moved to the next position; If no information is provided the current big cam will be used |
+| SYNO_SS_PREVIOUS_POSITION | nothing or dsIdx = index of the datastation in the configuration; camName = the name of the cam as in the configuration| The cam will with the specified id and name will be moved to the next position; If no information is provided the current big cam will be used |
+| SYNO_SS_CHANGE_POSITION | dsIdx = index of the datastation in the configuration; camName = the name of the cam as in the configuration; position = the id of the position (starting with 0) | The cam will with the specified id and name will be moved to the specified position |

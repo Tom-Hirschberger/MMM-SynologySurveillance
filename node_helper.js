@@ -10,12 +10,13 @@ module.exports = NodeHelper.create({
 
   start: function () {
     this.started = false
-    this.ds = []
+    this.urlUpdateInProgress = false
+    this.ds = {}
   },
 
   getStreamUrls: function(){
+    this.urlUpdateInProgress = true
     const self = this
-    self.ds = []
     let result = []
 
     // console.log("Creating "+self.config.ds.length+" DiskStation(s)")
@@ -35,7 +36,8 @@ module.exports = NodeHelper.create({
       syno.dsIdx = curDsIdx
 
       // console.log("Created DS with id: "+curDsIdx+" and url: "+curDs.protocol+"://"+curDs.host+":"+curDs.port)
-      self.ds[curDsIdx] = syno
+      self.ds[curDsIdx] = {}
+      self.ds[curDsIdx].syno = syno
 
       let validCamNames = {}
       for (let i = 0; i <curDs.cams.length; i++){
@@ -58,10 +60,29 @@ module.exports = NodeHelper.create({
               if(notFirst){
                 idString+=","
               }
-      
               idString+=cameras[key]["id"]
               notFirst = true;
             }
+          }
+
+          self.ds[curDsIdx].idNameMap = idNameMap
+
+          self.ds[curDsIdx].ptzPresetInfo = {}
+          for(let curCamId in idNameMap){
+            self.ds[curDsIdx].ptzPresetInfo[curCamId] = []
+            syno.ss.listPresetPtz({'cameraId':curCamId}, function(ptzError,ptzData){
+              console.log("CurDS: "+curDsIdx+" curCamId: "+curCamId+": "+JSON.stringify(ptzData,null,2))
+
+              if(typeof ptzData !== "undefined"){
+                self.ds[curDsIdx].ptzPresetInfo[curCamId] = ptzData.presets
+                self.sendSocketNotification("DS_PTZ_PRESET_INFO", {
+                  dsIdx: curDsIdx,
+                  curCamId: curCamId,
+                  camName: idNameMap[curCamId],
+                  ptzData: ptzData.presets
+                })
+              }
+            })
           }
     
           syno.ss.getLiveViewPathCamera({'idList':idString}, function(liveViewError,liveViewData){
@@ -94,6 +115,7 @@ module.exports = NodeHelper.create({
     
               console.log(JSON.stringify(curPayload,null,2))
     
+              self.urlUpdateInProgress = false
               self.sendSocketNotification("DS_STREAM_INFO",curPayload)
             }
             //  else {
@@ -105,6 +127,56 @@ module.exports = NodeHelper.create({
         //   console.log(JSON.stringify(error, null, 2))
         // }
       })
+    }
+  },
+
+
+  Sleep: function (milliseconds) {
+    return new Promise(resolve => setTimeout(resolve, milliseconds));
+  },
+
+  goPosition: async function(dsIdx, camName, position){
+    const self = this
+    let curDsIdx = dsIdx
+    let curCamName = camName
+    let curPosition = position
+    while(self.urlUpdateInProgress){
+      Sleep(1000)
+    }
+
+    if((typeof self.ds[dsIdx] !== "undefined") && (typeof self.ds[dsIdx].idNameMap !== "undefined")){
+      var camId = null
+      for(var curCamId in self.ds[dsIdx].idNameMap){
+        console.log("Checking if camdId "+curCamId+" with name: "+self.ds[dsIdx].idNameMap[curCamId]+" matches name "+camName)
+        if(self.ds[dsIdx].idNameMap[curCamId] === camName){
+          camId = curCamId
+          break
+        }
+      }
+
+      if(camId){
+        if((typeof self.ds[dsIdx].ptzPresetInfo !== "undefined")&& (typeof self.ds[dsIdx].ptzPresetInfo[camId] !== "undefined")){
+          if((position >= 0) && (position < Object.keys(self.ds[dsIdx].ptzPresetInfo[camId]).length)){
+            self.ds[dsIdx].syno.ss.goPresetPtz({'cameraId':camId, 'position':position}, function(goPtzError,goPtzData){
+              if(goPtzError){
+                console.log("Position could not be changed: "+JSON.stringify(goPtzError))
+              } else {
+                self.sendSocketNotification("DS_CHANGED_POSITION", {
+                  dsIdx: curDsIdx,
+                  camName: curCamName,
+                  position: curPosition
+                })
+              }
+            })
+          }
+        } else {
+          console.log("Could not change position of cam: "+camName+" of ds: "+dsIdx+" because no ptz preset info is available!")
+        }
+      } else {
+        console.log("Could not change postion of cam: "+camName+" because no id of this cam is known!")
+      }
+    } else {
+      console.log("Could not change position of cam: "+camName+" because no id name mapping is present for this ds ("+dsIdx+") at the moment.")
     }
   },
 
@@ -121,6 +193,9 @@ module.exports = NodeHelper.create({
       self.getStreamUrls()
     } else if (notification === "SYNO_SS_CHANGE_CAM"){
       self.sendSocketNotification(notification,payload)
+    } else if (notification === "DS_CHANGE_POSITION"){
+      console.log("Changing position of cam: "+payload.camName+" of ds: "+payload.dsIdx+" to: "+payload.position)
+      self.goPosition(payload.dsIdx, payload.camName, payload.position)
     }
   }
 })
