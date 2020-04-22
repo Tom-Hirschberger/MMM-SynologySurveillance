@@ -8,6 +8,8 @@ Module.register('MMM-SynologySurveillance', {
     showOneBig: true,
     addBigToNormal: false,
     showBigCamName: false,
+    showBigPositions: false,
+    showPositions: false,
     showCamName: false,
     showUnreachableCams: true,
     urlRefreshInterval: 60,
@@ -45,21 +47,21 @@ Module.register('MMM-SynologySurveillance', {
         this.dsPresetCurPosition[curDsIdx] = {}
         for(var curCamIdx = 0; curCamIdx < this.config.ds[curDsIdx].cams.length; curCamIdx++){
           this.dsPresetInfo[curDsIdx][this.config.ds[curDsIdx].cams[curCamIdx].name] = {}
-          this.dsPresetCurPosition[curDsIdx][curCamIdx] = 0
+          this.dsPresetCurPosition[curDsIdx][this.config.ds[curDsIdx].cams[curCamIdx].name] = 0
           if(typeof this.config.ds[curDsIdx].cams[curCamIdx].alias !== "undefined"){
             var curCamName = this.config.ds[curDsIdx].cams[curCamIdx].alias
           } else {
             var curCamName = this.config.ds[curDsIdx].cams[curCamIdx].name
           }
           // console.log("Mapping cam name: "+curCamName+" to ds "+curDsIdx+" and cam id "+curCamIdx)
-          nameDsCamIdxMap[curCamName] = [curDsIdx,curCamIdx]
+          nameDsCamIdxMap[curCamName] = [curDsIdx,curCamIdx,this.config.ds[curDsIdx].cams[curCamIdx].name]
         }
       }
 
       for(var curOrderIdx = 0; curOrderIdx < this.config.order.length; curOrderIdx++){
         var curOrderName = this.config.order[curOrderIdx]
         if(typeof nameDsCamIdxMap[curOrderName] !== "undefined"){
-          var curRes = [nameDsCamIdxMap[curOrderName][0], nameDsCamIdxMap[curOrderName][1], curOrderName]
+          var curRes = [nameDsCamIdxMap[curOrderName][0], nameDsCamIdxMap[curOrderName][1], curOrderName, nameDsCamIdxMap[curOrderName][2]]
           // console.log("Pushing to order (special): "+JSON.stringify(curRes))
           this.order.push(curRes)
         } 
@@ -73,7 +75,7 @@ Module.register('MMM-SynologySurveillance', {
         this.dsPresetCurPosition[curDsIdx] = {}
         for(var curCamIdx = 0; curCamIdx < this.config.ds[curDsIdx].cams.length; curCamIdx++){
           this.dsPresetInfo[curDsIdx][this.config.ds[curDsIdx].cams[curCamIdx].name] = {}
-          this.dsPresetCurPosition[curDsIdx][curCamIdx] = 0
+          this.dsPresetCurPosition[curDsIdx][this.config.ds[curDsIdx].cams[curCamIdx].name] = 0
           if(typeof this.config.ds[curDsIdx].cams[curCamIdx].alias !== "undefined"){
             var curCamName = this.config.ds[curDsIdx].cams[curCamIdx].alias
           } else {
@@ -81,7 +83,7 @@ Module.register('MMM-SynologySurveillance', {
           }
           var curRes = [curDsIdx, curCamIdx, curCamName]
           // console.log("Pushing to order (regular): "+JSON.stringify(curRes))
-          this.order.push([curDsIdx, curCamIdx, curCamName])
+          this.order.push([curDsIdx, curCamIdx, curCamName, this.config.ds[curDsIdx].cams[curCamIdx].name])
         }
       }
     }
@@ -108,21 +110,21 @@ Module.register('MMM-SynologySurveillance', {
 
     if(this.config.vertical && this.config.showOneBig){
       if(typeof this.order[this.curBigIdx] !== "undefined"){
-        var curDsIdx = this.order[this.curBigIdx][0]
-        var curCamIdx = this.order[this.curBigIdx][1]
-        var curCamAlias = this.order[this.curBigIdx][2]
-        var curCamName = this.config.ds[curDsIdx].cams[curCamIdx].name
-        var camWrapper = document.createElement("div")
+        let curDsIdx = this.order[this.curBigIdx][0]
+        let curCamIdx = this.order[this.curBigIdx][1]
+        let curCamAlias = this.order[this.curBigIdx][2]
+        let curCamName = this.config.ds[curDsIdx].cams[curCamIdx].name
+        let camWrapper = document.createElement("div")
           camWrapper.className = "camWrapper big "+curDsIdx+"_"+curCamIdx+" "+curCamAlias
           if(this.config.showBigCamName){
-            var camNameWrapper = document.createElement("div")
+            let camNameWrapper = document.createElement("div")
               camNameWrapper.className = "name"
               camNameWrapper.innerHTML = curCamAlias + "<br>"
             camWrapper.appendChild(camNameWrapper)
           }
 
-          var innerCamWrapper = document.createElement("div")
-            var innerCamWrapperClassName = "innerCamWrapper big"
+          let innerCamWrapper = document.createElement("div")
+            let innerCamWrapperClassName = "innerCamWrapper big"
             if((typeof this.dsStreamInfo[curDsIdx] !== "undefined") &&
               (typeof this.dsStreamInfo[curDsIdx][curCamName] !== "undefined")
             ){
@@ -137,15 +139,46 @@ Module.register('MMM-SynologySurveillance', {
             innerCamWrapper.className = innerCamWrapperClassName
             innerCamWrapper.appendChild(cam)
           camWrapper.appendChild(innerCamWrapper)
+
+          if(self.config.showBigPositions){
+            let innerPositionWrapper = document.createElement("div")
+              innerPositionWrapper.className = "innerPositionWrapper big"
+              //this.dsPresetInfo[curDsIdx][this.config.ds[curDsIdx].cams[curCamIdx].name]
+              for(var curPreset in this.dsPresetInfo[curDsIdx][curCamName]) {
+                let curPosition = this.dsPresetInfo[curDsIdx][curCamName][curPreset].position
+                console.log("CUR_POS: "+curPosition + " curActive: "+this.dsPresetCurPosition[curDsIdx][curCamName])
+                let curPositionName = this.dsPresetInfo[curDsIdx][curCamName][curPreset].name
+
+                var position = document.createElement("div")
+                  //this.dsPresetCurPosition[curDsIdx][this.config.ds[curDsIdx].cams[curCamIdx].name] 
+                  position.className = "position big"
+                  if(this.dsPresetCurPosition[curDsIdx][curCamName] === curPosition){
+                    var positionSelected = document.createElement("div")
+                      positionSelected.className = "selected"
+                    position.appendChild(positionSelected)
+                  }
+                  position.addEventListener("click", ()=>{
+                    self.dsPresetCurPosition[curDsIdx][curCamName] = curPosition
+                    self.updateDom(self.config.animationSpeed)
+                    self.sendSocketNotification("DS_CHANGE_POSITION", {
+                      dsIdx: curDsIdx,
+                      camName: curCamName,
+                      position: curPosition
+                    }
+                  )})
+                innerPositionWrapper.appendChild(position)
+              }
+            camWrapper.appendChild(innerPositionWrapper)
+          }
         wrapper.appendChild(camWrapper)
       }
     }
 
     for(let curOrderIdx = 0; curOrderIdx < this.order.length; curOrderIdx++){
-      var curDsIdx = this.order[curOrderIdx][0]
-      var curCamIdx = this.order[curOrderIdx][1]
-      var curCamAlias = this.order[curOrderIdx][2]
-      var curCamName = this.config.ds[curDsIdx].cams[curCamIdx].name
+      let curDsIdx = this.order[curOrderIdx][0]
+      let curCamIdx = this.order[curOrderIdx][1]
+      let curCamAlias = this.order[curOrderIdx][2]
+      let curCamName = this.config.ds[curDsIdx].cams[curCamIdx].name
       
       if(
         (typeof this.config.ds[curDsIdx].cams[curCamIdx].profiles === "undefined") ||
@@ -158,19 +191,23 @@ Module.register('MMM-SynologySurveillance', {
           if(!this.config.showOneBig || (curOrderIdx !== this.curBigIdx)){
             var camWrapper = document.createElement("div")
                 camWrapper.className = "camWrapper "+curDsIdx+"_"+curCamIdx+" "+curCamAlias
-                if(this.config.showOneBig){
-                  camWrapper.addEventListener("click", ()=>{self.sendSocketNotification("SYNO_SS_CHANGE_CAM", {id: curOrderIdx})})
-                }
 
                 if(this.config.showCamName){
                   var camNameWrapper = document.createElement("div")
                     camNameWrapper.className = "name"
                     camNameWrapper.innerHTML = curCamAlias
+                  if(this.config.showOneBig){
+                    camNameWrapper.addEventListener("click", ()=>{self.sendSocketNotification("SYNO_SS_CHANGE_CAM", {id: curOrderIdx})})
+                  }
+    
                   camWrapper.appendChild(camNameWrapper)
                 }
 
                 var innerCamWrapper = document.createElement("div")
                   var innerCamWrapperClassName = "innerCamWrapper"
+                  if(this.config.showOneBig){
+                    innerCamWrapper.addEventListener("click", ()=>{self.sendSocketNotification("SYNO_SS_CHANGE_CAM", {id: curOrderIdx})})
+                  }
                   if((typeof this.dsStreamInfo[curDsIdx] !== "undefined") &&
                   (typeof this.dsStreamInfo[curDsIdx][curCamName] !== "undefined")
                   ){
@@ -185,6 +222,34 @@ Module.register('MMM-SynologySurveillance', {
                   innerCamWrapper.className = innerCamWrapperClassName
                   innerCamWrapper.appendChild(cam)
                 camWrapper.appendChild(innerCamWrapper)
+
+                if(self.config.showPositions){
+                  let innerPositionWrapper = document.createElement("div")
+                    innerPositionWrapper.className = "innerPositionWrapper"
+                    for(var curPreset in this.dsPresetInfo[curDsIdx][curCamName]) {
+                      let curPosition = this.dsPresetInfo[curDsIdx][curCamName][curPreset].position
+                      let curPositionName = this.dsPresetInfo[curDsIdx][curCamName][curPreset].name
+      
+                      var position = document.createElement("div")
+                        position.className = "position"
+                        if(this.dsPresetCurPosition[curDsIdx][curCamName] === curPosition){
+                          var positionSelected = document.createElement("div")
+                            positionSelected.className = "selected"
+                          position.appendChild(positionSelected)
+                        }
+                        position.addEventListener("click", ()=>{
+                          self.dsPresetCurPosition[curDsIdx][curCamName] = curPosition
+                          self.updateDom(self.config.animationSpeed)
+                          self.sendSocketNotification("DS_CHANGE_POSITION", {
+                            dsIdx: curDsIdx,
+                            camName: curCamName,
+                            position: curPosition
+                          }
+                        )})
+                      innerPositionWrapper.appendChild(position)
+                    }
+                  camWrapper.appendChild(innerPositionWrapper)
+                }
             wrapper.appendChild(camWrapper)
           } else {
             if(this.config.vertical && this.config.addBigToNormal){
@@ -216,7 +281,7 @@ Module.register('MMM-SynologySurveillance', {
                 }
 
                 var innerCamWrapper = document.createElement("div")
-                  var innerCamWrapperClassName = "innerCamWrapper big"
+                var innerCamWrapperClassName = "innerCamWrapper big"
                   if((typeof this.dsStreamInfo[curDsIdx] !== "undefined") &&
                     (typeof this.dsStreamInfo[curDsIdx][curCamName] !== "undefined")
                   ){
@@ -231,6 +296,37 @@ Module.register('MMM-SynologySurveillance', {
                   innerCamWrapper.className = innerCamWrapperClassName
                   innerCamWrapper.appendChild(cam)
                 camWrapper.appendChild(innerCamWrapper)
+
+                if(self.config.showBigPositions){
+                  let innerPositionWrapper = document.createElement("div")
+                    innerPositionWrapper.className = "innerPositionWrapper big"
+                    //this.dsPresetInfo[curDsIdx][this.config.ds[curDsIdx].cams[curCamIdx].name]
+                    for(var curPreset in this.dsPresetInfo[curDsIdx][curCamName]) {
+                      let curPosition = this.dsPresetInfo[curDsIdx][curCamName][curPreset].position
+                      console.log("CUR_POS: "+curPosition + " curActive: "+this.dsPresetCurPosition[curDsIdx][curCamName])
+                      let curPositionName = this.dsPresetInfo[curDsIdx][curCamName][curPreset].name
+      
+                      var position = document.createElement("div")
+                        //this.dsPresetCurPosition[curDsIdx][this.config.ds[curDsIdx].cams[curCamIdx].name] 
+                        position.className = "position big"
+                        if(this.dsPresetCurPosition[curDsIdx][curCamName] === curPosition){
+                          var positionSelected = document.createElement("div")
+                            positionSelected.className = "selected"
+                          position.appendChild(positionSelected)
+                        }
+                        position.addEventListener("click", ()=>{
+                          self.dsPresetCurPosition[curDsIdx][curCamName] = curPosition
+                          self.updateDom(self.config.animationSpeed)
+                          self.sendSocketNotification("DS_CHANGE_POSITION", {
+                            dsIdx: curDsIdx,
+                            camName: curCamName,
+                            position: curPosition
+                          }
+                        )})
+                      innerPositionWrapper.appendChild(position)
+                    }
+                  camWrapper.appendChild(innerPositionWrapper)
+                }
               wrapper.appendChild(camWrapper)
             }
           }
@@ -289,6 +385,28 @@ Module.register('MMM-SynologySurveillance', {
     return nextCamId
   },
 
+  getNextPositionIdx: function (dsIdx, camName, type=1) {
+    var nextPostion = this.dsPresetCurPosition[dsIdx][camName]
+    if((typeof this.dsPresetInfo[dsIdx] !== "undefined") &&
+       (typeof this.dsPresetInfo[dsIdx][camName] !== "undefined") &&
+       (Object.keys(this.dsPresetInfo[dsIdx][camName]).length > 0)
+    ){
+      if(type === 1){
+        nextPostion += 1
+        if(nextPostion >= Object.keys(this.dsPresetInfo[dsIdx][camName]).length){
+          nextPostion = 0
+        }
+      } else if(type === -1){
+        nextPostion -= 1
+        if(nextPostion < 0){
+          nextPostion = Object.keys(this.dsPresetInfo[dsIdx][camName]).length - 1
+        }
+      }
+    }
+    return nextPostion
+  },
+
+
   notificationReceived: function(notification,payload) {
     if(notification === "SYNO_SS_NEXT_CAM"){
       this.curBigIdx = this.getNextCamId(this.curBigIdx, 1)
@@ -302,6 +420,52 @@ Module.register('MMM-SynologySurveillance', {
         this.curBigIdx = this.payload.id
         this.updateDom(this.config.animationSpeed)
       }
+    } else if(notification === "SYNO_SS_NEXT_POSITION"){
+      if((typeof payload.dsIdx !== "undefined") &&
+         (typeof payload.camName !== "undefined")
+      ){
+        var dsIdx = payload.dsIdx
+        var camName = payload.camName
+      } else {
+        var dsIdx = this.order[this.curBigIdx][0]
+        var camName = this.order[this.curBigIdx][3]
+      }
+      var position = this.getNextPositionIdx(dsIdx,camName,1)
+      this.dsPresetCurPosition[dsIdx][camName] = position
+
+      this.sendSocketNotification("DS_CHANGE_POSITION", {
+        dsIdx: dsIdx,
+        camName: camName,
+        position: position,
+      })
+      this.updateDom(this.config.animationSpeed)
+    } else if(notification === "SYNO_SS_PREVIOUS_POSITION"){
+      if((typeof payload.dsIdx !== "undefined") &&
+         (typeof payload.camName !== "undefined")
+      ){
+        var dsIdx = payload.dsIdx
+        var camName = payload.camName
+      } else {
+        var dsIdx = this.order[this.curBigIdx][0]
+        var camName = this.order[this.curBigIdx][3]
+      }
+      var position = this.getNextPositionIdx(dsIdx,camName,-1)
+      this.dsPresetCurPosition[dsIdx][camName] = position
+      
+      this.sendSocketNotification("DS_CHANGE_POSITION", {
+        dsIdx: dsIdx,
+        camName: camName,
+        position: position,
+      })
+      this.updateDom(this.config.animationSpeed)
+    } else if(notification === "SYNO_SS_CHANGE_POSITION"){
+      this.sendSocketNotification("DS_CHANGE_POSITION", {
+        dsIdx: payload.dsIdx,
+        camName: payload.camName,
+        position: payload.position,
+      })
+      this.dsPresetCurPosition[payload.dsIdx][payload.camName] = payload.position
+      this.updateDom(this.config.animationSpeed)
     } else if (notification === 'CHANGED_PROFILE'){
       if(typeof payload.to !== 'undefined'){
         this.currentProfile = payload.to
@@ -315,7 +479,7 @@ Module.register('MMM-SynologySurveillance', {
   socketNotificationReceived: function (notification, payload) {
     if(notification === "DS_STREAM_INFO"){
       console.log("Got new Stream info of ds with id: "+payload.dsIdx)
-      console.log(JSON.stringify(payload, null, 2))
+      console.log(JSON.stringify(payload, null, 3))
       if(typeof this.dsStreamInfo[payload.dsIdx] !== "undefined") {
         var updated = false
         for(var curKey in Object.keys(this.dsStreamInfo[payload.dsIdx])){
@@ -350,6 +514,13 @@ Module.register('MMM-SynologySurveillance', {
       console.log("Got notification to change cam to: "+payload.id)
       if(typeof this.order[payload.id] !== "undefined"){
         this.curBigIdx = payload.id
+        this.updateDom(this.config.animationSpeed)
+      }
+    } else if (notification === "DS_PTZ_PRESET_INFO"){
+      this.dsPresetInfo[payload.dsIdx][payload.camName] = payload.ptzData
+    } else if(notification === "DS_CHANGED_POSITION"){
+      if(this.dsPresetCurPosition[payload.dsIdx][payload.camName] !== payload.position){
+        this.dsPresetCurPosition[payload.dsIdx][payload.camName] = payload.position
         this.updateDom(this.config.animationSpeed)
       }
     }

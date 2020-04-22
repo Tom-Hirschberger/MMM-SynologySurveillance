@@ -2,9 +2,12 @@
     --column-cnt: 2;
     --cam-bg-color: #2b2c30;
     --cam-name-bg-color: #1b1b1c;
+    --postion-color: #5e5f63;
+    --position-selected-color: #1b1b1c;
     --cam-wrapper-border-radius: 5px;
     --cam-border-radius: 5px;
     --name-border-radius: 5px;
+    --position-border-radius: 3px;
     --padding-camWrapper: 5px;
     --cam-width: 200px;
     --cam-min-height: calc(var(--cam-width) /1.33);
@@ -17,6 +20,10 @@
     --icon-postion: calc(var(--cam-min-height)/2 - 25px);
     --icon-big-position: calc(calc(var(--cam-big-min-height)/2) - 25px);
 
+    --position-size: 10px;
+    --position-big-size: calc(var(--position-size) * 2);
+    --position-margin: 5px 5px 5px 5px;
+
     --width-noSpace: calc(var(--cam-width) * var(--column-cnt));
 
     width: calc(calc(calc(var(--column-cnt) * 3)*var(--padding-camWrapper)) + var(--width-noSpace));
@@ -25,6 +32,36 @@
     align-items: center;
     display: flex;
     flex-wrap: wrap;
+}
+
+.innerPositionWrapper {
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;;
+}
+
+.position {
+    margin: var(--position-margin);
+    padding: 5px;
+    height: var(--position-size);
+    width: var(--position-size);
+    background-color: var(--postion-color);
+    border-radius: var(--position-border-radius);
+}
+
+.position.big {
+    height: var(--position-big-size);
+    width: var(--position-big-size);
+}
+
+.position .selected {
+    width: 100%;
+    min-width: 100%;
+    height: 100%;
+    min-height: 100%;
+    border-radius: var(--position-border-radius);
+    background-color: var(--position-selected-color);
 }
 
 .camWrapper {
