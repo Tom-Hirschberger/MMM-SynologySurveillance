@@ -135,7 +135,7 @@ module.exports = NodeHelper.create({
     return new Promise(resolve => setTimeout(resolve, milliseconds));
   },
 
-  goPosition: async function(dsIdx, camName, position){
+  goPosition: async function(dsIdx, camName, position, lastPosition){
     const self = this
     let curDsIdx = dsIdx
     let curCamName = camName
@@ -147,8 +147,9 @@ module.exports = NodeHelper.create({
     if((typeof self.ds[dsIdx] !== "undefined") && (typeof self.ds[dsIdx].idNameMap !== "undefined")){
       var camId = null
       for(var curCamId in self.ds[dsIdx].idNameMap){
-        console.log("Checking if camdId "+curCamId+" with name: "+self.ds[dsIdx].idNameMap[curCamId]+" matches name "+camName)
+        // console.log("Checking if camdId "+curCamId+" with name: "+self.ds[dsIdx].idNameMap[curCamId]+" matches name "+camName)
         if(self.ds[dsIdx].idNameMap[curCamId] === camName){
+          console.log("Found id of cam: "+camName)
           camId = curCamId
           break
         }
@@ -158,15 +159,11 @@ module.exports = NodeHelper.create({
         if((typeof self.ds[dsIdx].ptzPresetInfo !== "undefined")&& (typeof self.ds[dsIdx].ptzPresetInfo[camId] !== "undefined")){
           if((position >= 0) && (position < Object.keys(self.ds[dsIdx].ptzPresetInfo[camId]).length)){
             self.ds[dsIdx].syno.ss.goPresetPtz({'cameraId':camId, 'position':position}, function(goPtzError,goPtzData){
-              if(goPtzError){
-                console.log("Position could not be changed: "+JSON.stringify(goPtzError))
-              } else {
-                self.sendSocketNotification("DS_CHANGED_POSITION", {
-                  dsIdx: curDsIdx,
-                  camName: curCamName,
-                  position: curPosition
-                })
-              }
+              self.sendSocketNotification("DS_CHANGED_POSITION", {
+                dsIdx: curDsIdx,
+                camName: curCamName,
+                position: curPosition
+              })
             })
           }
         } else {
@@ -195,7 +192,7 @@ module.exports = NodeHelper.create({
       self.sendSocketNotification(notification,payload)
     } else if (notification === "DS_CHANGE_POSITION"){
       console.log("Changing position of cam: "+payload.camName+" of ds: "+payload.dsIdx+" to: "+payload.position)
-      self.goPosition(payload.dsIdx, payload.camName, payload.position)
+      self.goPosition(payload.dsIdx, payload.camName, payload.position, payload.lastPosition)
     }
   }
 })

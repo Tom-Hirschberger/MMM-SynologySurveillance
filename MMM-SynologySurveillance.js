@@ -437,6 +437,7 @@ Module.register('MMM-SynologySurveillance', {
         dsIdx: dsIdx,
         camName: camName,
         position: position,
+        lastPosition: this.dsPresetCurPosition[payload.dsIdx][payload.camName]
       })
       if(this.config.showBigPositions || this.config.showPositions){
         this.updateDom(this.config.animationSpeed)
@@ -458,6 +459,7 @@ Module.register('MMM-SynologySurveillance', {
         dsIdx: dsIdx,
         camName: camName,
         position: position,
+        lastPosition: this.dsPresetCurPosition[payload.dsIdx][payload.camName]
       })
       if(this.config.showBigPositions || this.config.showPositions){
         this.updateDom(this.config.animationSpeed)
@@ -467,6 +469,7 @@ Module.register('MMM-SynologySurveillance', {
         dsIdx: payload.dsIdx,
         camName: payload.camName,
         position: payload.position,
+        lastPosition: this.dsPresetCurPosition[payload.dsIdx][payload.camName]
       })
       this.dsPresetCurPosition[payload.dsIdx][payload.camName] = payload.position
       if(this.config.showBigPositions || this.config.showPositions){
@@ -524,6 +527,9 @@ Module.register('MMM-SynologySurveillance', {
       }
     } else if (notification === "DS_PTZ_PRESET_INFO"){
       this.dsPresetInfo[payload.dsIdx][payload.camName] = payload.ptzData
+      if(this.config.showBigPositions || this.config.showPositions){
+        this.updateDom(this.config.animationSpeed)
+      }
     } else if(notification === "DS_CHANGED_POSITION"){
       if(this.dsPresetCurPosition[payload.dsIdx][payload.camName] !== payload.position){
         this.dsPresetCurPosition[payload.dsIdx][payload.camName] = payload.position
