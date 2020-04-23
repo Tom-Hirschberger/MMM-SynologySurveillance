@@ -135,7 +135,7 @@ module.exports = NodeHelper.create({
     return new Promise(resolve => setTimeout(resolve, milliseconds));
   },
 
-  goPosition: async function(dsIdx, camName, position, lastPosition){
+  goPosition: async function(dsIdx, camName, position){
     const self = this
     let curDsIdx = dsIdx
     let curCamName = camName
@@ -192,7 +192,7 @@ module.exports = NodeHelper.create({
       self.sendSocketNotification(notification,payload)
     } else if (notification === "DS_CHANGE_POSITION"){
       console.log("Changing position of cam: "+payload.camName+" of ds: "+payload.dsIdx+" to: "+payload.position)
-      self.goPosition(payload.dsIdx, payload.camName, payload.position, payload.lastPosition)
+      self.goPosition(payload.dsIdx, payload.camName, payload.position)
     }
   }
 })

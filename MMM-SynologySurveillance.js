@@ -437,7 +437,6 @@ Module.register('MMM-SynologySurveillance', {
         dsIdx: dsIdx,
         camName: camName,
         position: position,
-        lastPosition: this.dsPresetCurPosition[payload.dsIdx][payload.camName]
       })
       if(this.config.showBigPositions || this.config.showPositions){
         this.updateDom(this.config.animationSpeed)
@@ -459,7 +458,6 @@ Module.register('MMM-SynologySurveillance', {
         dsIdx: dsIdx,
         camName: camName,
         position: position,
-        lastPosition: this.dsPresetCurPosition[payload.dsIdx][payload.camName]
       })
       if(this.config.showBigPositions || this.config.showPositions){
         this.updateDom(this.config.animationSpeed)
@@ -469,7 +467,6 @@ Module.register('MMM-SynologySurveillance', {
         dsIdx: payload.dsIdx,
         camName: payload.camName,
         position: payload.position,
-        lastPosition: this.dsPresetCurPosition[payload.dsIdx][payload.camName]
       })
       this.dsPresetCurPosition[payload.dsIdx][payload.camName] = payload.position
       if(this.config.showBigPositions || this.config.showPositions){
