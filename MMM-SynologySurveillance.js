@@ -438,7 +438,9 @@ Module.register('MMM-SynologySurveillance', {
         camName: camName,
         position: position,
       })
-      this.updateDom(this.config.animationSpeed)
+      if(this.config.showBigPositions || this.config.showPositions){
+        this.updateDom(this.config.animationSpeed)
+      }
     } else if(notification === "SYNO_SS_PREVIOUS_POSITION"){
       if((typeof payload.dsIdx !== "undefined") &&
          (typeof payload.camName !== "undefined")
@@ -457,7 +459,9 @@ Module.register('MMM-SynologySurveillance', {
         camName: camName,
         position: position,
       })
-      this.updateDom(this.config.animationSpeed)
+      if(this.config.showBigPositions || this.config.showPositions){
+        this.updateDom(this.config.animationSpeed)
+      }
     } else if(notification === "SYNO_SS_CHANGE_POSITION"){
       this.sendSocketNotification("DS_CHANGE_POSITION", {
         dsIdx: payload.dsIdx,
@@ -465,7 +469,9 @@ Module.register('MMM-SynologySurveillance', {
         position: payload.position,
       })
       this.dsPresetCurPosition[payload.dsIdx][payload.camName] = payload.position
-      this.updateDom(this.config.animationSpeed)
+      if(this.config.showBigPositions || this.config.showPositions){
+        this.updateDom(this.config.animationSpeed)
+      }
     } else if (notification === 'CHANGED_PROFILE'){
       if(typeof payload.to !== 'undefined'){
         this.currentProfile = payload.to
