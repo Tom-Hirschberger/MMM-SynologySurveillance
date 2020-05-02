@@ -489,10 +489,17 @@ Module.register('MMM-SynologySurveillance', {
       if(typeof this.dsStreamInfo[payload.dsIdx] !== "undefined") {
         var updated = false
         for(var curKey in Object.keys(this.dsStreamInfo[payload.dsIdx])){
-          if(this.dsStreamInfo[payload.dsIdx][curKey] !== payload.camStreams[curKey]){
-            this.dsStreamInfo[payload.dsIdx] = payload.camStreams
-            this.updateDom(this.config.animationSpeed)
+          if(typeof payload.camStreams[curKey] !== "undefined"){
+            if(this.dsStreamInfo[payload.dsIdx][curKey] !== payload.camStreams[curKey]){
+              this.dsStreamInfo[payload.dsIdx] = payload.camStreams
+              this.updateDom(this.config.animationSpeed)
+              console.log("URL of cam: "+curKey+" changed. Updating view!")
+              updated = true
+              break
+            }
+          } else {
             console.log("URL of cam: "+curKey+" changed. Updating view!")
+            this.dsStreamInfo[payload.dsIdx] = {}
             updated = true
             break
           }

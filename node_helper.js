@@ -122,17 +122,27 @@ module.exports = NodeHelper.create({
       
                 self.urlUpdateInProgress = false
                 self.sendSocketNotification("DS_STREAM_INFO",curPayload)
+              } else {
+                self.sendSocketNotification("DS_STREAM_INFO",{
+                  dsIdx: curDsIdx,
+                  camStreams: {},
+                })
               }
-              //  else {
-              //   console.log(JSON.stringify(liveViewError))
-              // }    
             });
           } else {
             console.log("Could not find any valid cam for ds with idx: "+curDsIdx)
+            self.sendSocketNotification("DS_STREAM_INFO",{
+              dsIdx: curDsIdx,
+              camStreams: {},
+            })
           }
         } else if (error){
           console.log("Problem during fetch of cams of ds with idx: "+curDsIdx)
           console.log(JSON.stringify(error, null, 2))
+          self.sendSocketNotification("DS_STREAM_INFO",{
+            dsIdx: curDsIdx,
+            camStreams: {},
+          })
         }
       })
     }

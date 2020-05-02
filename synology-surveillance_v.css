@@ -35,6 +35,7 @@
 }
 
 .innerPositionWrapper {
+    min-height: calc(var(--position-size) + 10px);
     justify-content: center;
     align-items: center;
     display: flex;
