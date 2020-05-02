@@ -48,11 +48,15 @@ module.exports = NodeHelper.create({
       console.log("Updating information of DS with idx: "+curDsIdx)
       // console.log("ValidCamNames of idx: "+curDsIdx+" :"+JSON.stringify(validCamNames))
       syno.ss.listCameras(function(error,data){
+        // console.log("Listing Cams of: "+curDsIdx)
+        // console.log("Error: "+JSON.stringify(error))
+        // console.log("Data: "+JSON.stringify(data))
+
+        let idNameMap = {}
+        let idString = ""
         if(typeof data !== "undefined"){
-          let idNameMap = {}
           let cameras = data["cameras"]
           let notFirst = false
-          let idString = ""
           for (let key in cameras){
 	          console.log("Found cam "+cameras[key]["newName"])
             idNameMap[cameras[key]["id"]] = cameras[key]["newName"]
@@ -85,47 +89,51 @@ module.exports = NodeHelper.create({
             })
           }
     
-          syno.ss.getLiveViewPathCamera({'idList':idString}, function(liveViewError,liveViewData){
-            // console.log("curDsIdx: "+JSON.stringify(curDsIdx))
-            // console.log("isNeeded: "+JSON.stringify(idsNeeded))
-            // console.log("idNameMap: "+JSON.stringify(idNameMap))
-            if(typeof liveViewData !== "undefined"){
-              // console.log("Got url info of DS with id: "+curDsIdx)
-              for(let curResIdx in liveViewData){
-                let curCamId = liveViewData[curResIdx]["id"]
-                let curCamName = idNameMap[curCamId]
-                if((typeof self.config.ds[curDsIdx].replaceHostPart === "undefined") ||
-                   (!self.config.ds[curDsIdx].replaceHostPart)
-                ){
-                  curDsResult[curCamName] = liveViewData[curResIdx]["mjpegHttpPath"]
-                } else {
-                  let curUrl = liveViewData[curResIdx]["mjpegHttpPath"]
-                  //first : is protocal:
-                  let newUrl = curUrl.substring(curUrl.indexOf(":")+1)
-                  //second: is port
-                  newUrl = newUrl.substring(newUrl.indexOf(":"))
-                  newUrl = self.config.ds[curDsIdx].protocol+"://"+self.config.ds[curDsIdx].host+newUrl
-                  curDsResult[curCamName] = newUrl
+          if(idString !== ""){
+            syno.ss.getLiveViewPathCamera({'idList':idString}, function(liveViewError,liveViewData){
+              // console.log("curDsIdx: "+JSON.stringify(curDsIdx))
+              // console.log("isNeeded: "+JSON.stringify(idsNeeded))
+              // console.log("idNameMap: "+JSON.stringify(idNameMap))
+              if(typeof liveViewData !== "undefined"){
+                // console.log("Got url info of DS with id: "+curDsIdx)
+                for(let curResIdx in liveViewData){
+                  let curCamId = liveViewData[curResIdx]["id"]
+                  let curCamName = idNameMap[curCamId]
+                  if((typeof self.config.ds[curDsIdx].replaceHostPart === "undefined") ||
+                    (!self.config.ds[curDsIdx].replaceHostPart)
+                  ){
+                    curDsResult[curCamName] = liveViewData[curResIdx]["mjpegHttpPath"]
+                  } else {
+                    let curUrl = liveViewData[curResIdx]["mjpegHttpPath"]
+                    //first : is protocal:
+                    let newUrl = curUrl.substring(curUrl.indexOf(":")+1)
+                    //second: is port
+                    newUrl = newUrl.substring(newUrl.indexOf(":"))
+                    newUrl = self.config.ds[curDsIdx].protocol+"://"+self.config.ds[curDsIdx].host+newUrl
+                    curDsResult[curCamName] = newUrl
+                  }
                 }
+                let curPayload = {
+                  dsIdx: curDsIdx,
+                  camStreams: curDsResult,
+                }
+      
+                console.log(JSON.stringify(curPayload,null,2))
+      
+                self.urlUpdateInProgress = false
+                self.sendSocketNotification("DS_STREAM_INFO",curPayload)
               }
-              let curPayload = {
-                dsIdx: curDsIdx,
-                camStreams: curDsResult,
-              }
-    
-              // console.log(JSON.stringify(curPayload,null,2))
-    
-              self.urlUpdateInProgress = false
-              self.sendSocketNotification("DS_STREAM_INFO",curPayload)
-            }
-            //  else {
-            //   console.log(JSON.stringify(liveViewError))
-            // }    
-          });
+              //  else {
+              //   console.log(JSON.stringify(liveViewError))
+              // }    
+            });
+          } else {
+            console.log("Could not find any valid cam for ds with idx: "+curDsIdx)
+          }
+        } else if (error){
+          console.log("Problem during fetch of cams of ds with idx: ":curDsIdx)
+          console.log(JSON.stringify(error, null, 2))
         }
-        //  else if(typeof error != "undefined"){
-        //   console.log(JSON.stringify(error, null, 2))
-        // }
       })
     }
   },
