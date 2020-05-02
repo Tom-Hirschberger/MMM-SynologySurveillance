@@ -438,7 +438,9 @@ Module.register('MMM-SynologySurveillance', {
         camName: camName,
         position: position,
       })
-      this.updateDom(this.config.animationSpeed)
+      if(this.config.showBigPositions || this.config.showPositions){
+        this.updateDom(this.config.animationSpeed)
+      }
     } else if(notification === "SYNO_SS_PREVIOUS_POSITION"){
       if((typeof payload.dsIdx !== "undefined") &&
          (typeof payload.camName !== "undefined")
@@ -457,7 +459,9 @@ Module.register('MMM-SynologySurveillance', {
         camName: camName,
         position: position,
       })
-      this.updateDom(this.config.animationSpeed)
+      if(this.config.showBigPositions || this.config.showPositions){
+        this.updateDom(this.config.animationSpeed)
+      }
     } else if(notification === "SYNO_SS_CHANGE_POSITION"){
       this.sendSocketNotification("DS_CHANGE_POSITION", {
         dsIdx: payload.dsIdx,
@@ -465,7 +469,9 @@ Module.register('MMM-SynologySurveillance', {
         position: payload.position,
       })
       this.dsPresetCurPosition[payload.dsIdx][payload.camName] = payload.position
-      this.updateDom(this.config.animationSpeed)
+      if(this.config.showBigPositions || this.config.showPositions){
+        this.updateDom(this.config.animationSpeed)
+      }
     } else if (notification === 'CHANGED_PROFILE'){
       if(typeof payload.to !== 'undefined'){
         this.currentProfile = payload.to
@@ -483,10 +489,17 @@ Module.register('MMM-SynologySurveillance', {
       if(typeof this.dsStreamInfo[payload.dsIdx] !== "undefined") {
         var updated = false
         for(var curKey in Object.keys(this.dsStreamInfo[payload.dsIdx])){
-          if(this.dsStreamInfo[payload.dsIdx][curKey] !== payload.camStreams[curKey]){
-            this.dsStreamInfo[payload.dsIdx] = payload.camStreams
-            this.updateDom(this.config.animationSpeed)
+          if(typeof payload.camStreams[curKey] !== "undefined"){
+            if(this.dsStreamInfo[payload.dsIdx][curKey] !== payload.camStreams[curKey]){
+              this.dsStreamInfo[payload.dsIdx] = payload.camStreams
+              this.updateDom(this.config.animationSpeed)
+              console.log("URL of cam: "+curKey+" changed. Updating view!")
+              updated = true
+              break
+            }
+          } else {
             console.log("URL of cam: "+curKey+" changed. Updating view!")
+            this.dsStreamInfo[payload.dsIdx] = {}
             updated = true
             break
           }
@@ -518,6 +531,9 @@ Module.register('MMM-SynologySurveillance', {
       }
     } else if (notification === "DS_PTZ_PRESET_INFO"){
       this.dsPresetInfo[payload.dsIdx][payload.camName] = payload.ptzData
+      if(this.config.showBigPositions || this.config.showPositions){
+        this.updateDom(this.config.animationSpeed)
+      }
     } else if(notification === "DS_CHANGED_POSITION"){
       if(this.dsPresetCurPosition[payload.dsIdx][payload.camName] !== payload.position){
         this.dsPresetCurPosition[payload.dsIdx][payload.camName] = payload.position

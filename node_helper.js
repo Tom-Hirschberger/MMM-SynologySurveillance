@@ -48,11 +48,15 @@ module.exports = NodeHelper.create({
       console.log("Updating information of DS with idx: "+curDsIdx)
       // console.log("ValidCamNames of idx: "+curDsIdx+" :"+JSON.stringify(validCamNames))
       syno.ss.listCameras(function(error,data){
+        // console.log("Listing Cams of: "+curDsIdx)
+        // console.log("Error: "+JSON.stringify(error))
+        // console.log("Data: "+JSON.stringify(data))
+
+        let idNameMap = {}
+        let idString = ""
         if(typeof data !== "undefined"){
-          let idNameMap = {}
           let cameras = data["cameras"]
           let notFirst = false
-          let idString = ""
           for (let key in cameras){
 	          console.log("Found cam "+cameras[key]["newName"])
             idNameMap[cameras[key]["id"]] = cameras[key]["newName"]
@@ -71,7 +75,7 @@ module.exports = NodeHelper.create({
           for(let curCamId in idNameMap){
             self.ds[curDsIdx].ptzPresetInfo[curCamId] = []
             syno.ss.listPresetPtz({'cameraId':curCamId}, function(ptzError,ptzData){
-              console.log("CurDS: "+curDsIdx+" curCamId: "+curCamId+": "+JSON.stringify(ptzData,null,2))
+              // console.log("CurDS: "+curDsIdx+" curCamId: "+curCamId+": "+JSON.stringify(ptzData,null,2))
 
               if(typeof ptzData !== "undefined"){
                 self.ds[curDsIdx].ptzPresetInfo[curCamId] = ptzData.presets
@@ -85,47 +89,61 @@ module.exports = NodeHelper.create({
             })
           }
     
-          syno.ss.getLiveViewPathCamera({'idList':idString}, function(liveViewError,liveViewData){
-            // console.log("curDsIdx: "+JSON.stringify(curDsIdx))
-            // console.log("isNeeded: "+JSON.stringify(idsNeeded))
-            // console.log("idNameMap: "+JSON.stringify(idNameMap))
-            if(typeof liveViewData !== "undefined"){
-              // console.log("Got url info of DS with id: "+curDsIdx)
-              for(let curResIdx in liveViewData){
-                let curCamId = liveViewData[curResIdx]["id"]
-                let curCamName = idNameMap[curCamId]
-                if((typeof self.config.ds[curDsIdx].replaceHostPart === "undefined") ||
-                   (!self.config.ds[curDsIdx].replaceHostPart)
-                ){
-                  curDsResult[curCamName] = liveViewData[curResIdx]["mjpegHttpPath"]
-                } else {
-                  let curUrl = liveViewData[curResIdx]["mjpegHttpPath"]
-                  //first : is protocal:
-                  let newUrl = curUrl.substring(curUrl.indexOf(":")+1)
-                  //second: is port
-                  newUrl = newUrl.substring(newUrl.indexOf(":"))
-                  newUrl = self.config.ds[curDsIdx].protocol+"://"+self.config.ds[curDsIdx].host+newUrl
-                  curDsResult[curCamName] = newUrl
+          if(idString !== ""){
+            syno.ss.getLiveViewPathCamera({'idList':idString}, function(liveViewError,liveViewData){
+              // console.log("curDsIdx: "+JSON.stringify(curDsIdx))
+              // console.log("isNeeded: "+JSON.stringify(idsNeeded))
+              // console.log("idNameMap: "+JSON.stringify(idNameMap))
+              if(typeof liveViewData !== "undefined"){
+                // console.log("Got url info of DS with id: "+curDsIdx)
+                for(let curResIdx in liveViewData){
+                  let curCamId = liveViewData[curResIdx]["id"]
+                  let curCamName = idNameMap[curCamId]
+                  if((typeof self.config.ds[curDsIdx].replaceHostPart === "undefined") ||
+                    (!self.config.ds[curDsIdx].replaceHostPart)
+                  ){
+                    curDsResult[curCamName] = liveViewData[curResIdx]["mjpegHttpPath"]
+                  } else {
+                    let curUrl = liveViewData[curResIdx]["mjpegHttpPath"]
+                    //first : is protocal:
+                    let newUrl = curUrl.substring(curUrl.indexOf(":")+1)
+                    //second: is port
+                    newUrl = newUrl.substring(newUrl.indexOf(":"))
+                    newUrl = self.config.ds[curDsIdx].protocol+"://"+self.config.ds[curDsIdx].host+newUrl
+                    curDsResult[curCamName] = newUrl
+                  }
                 }
+                let curPayload = {
+                  dsIdx: curDsIdx,
+                  camStreams: curDsResult,
+                }
+      
+                console.log(JSON.stringify(curPayload,null,2))
+      
+                self.urlUpdateInProgress = false
+                self.sendSocketNotification("DS_STREAM_INFO",curPayload)
+              } else {
+                self.sendSocketNotification("DS_STREAM_INFO",{
+                  dsIdx: curDsIdx,
+                  camStreams: {},
+                })
               }
-              let curPayload = {
-                dsIdx: curDsIdx,
-                camStreams: curDsResult,
-              }
-    
-              console.log(JSON.stringify(curPayload,null,2))
-    
-              self.urlUpdateInProgress = false
-              self.sendSocketNotification("DS_STREAM_INFO",curPayload)
-            }
-            //  else {
-            //   console.log(JSON.stringify(liveViewError))
-            // }    
-          });
+            });
+          } else {
+            console.log("Could not find any valid cam for ds with idx: "+curDsIdx)
+            self.sendSocketNotification("DS_STREAM_INFO",{
+              dsIdx: curDsIdx,
+              camStreams: {},
+            })
+          }
+        } else if (error){
+          console.log("Problem during fetch of cams of ds with idx: "+curDsIdx)
+          console.log(JSON.stringify(error, null, 2))
+          self.sendSocketNotification("DS_STREAM_INFO",{
+            dsIdx: curDsIdx,
+            camStreams: {},
+          })
         }
-        //  else if(typeof error != "undefined"){
-        //   console.log(JSON.stringify(error, null, 2))
-        // }
       })
     }
   },
@@ -147,8 +165,9 @@ module.exports = NodeHelper.create({
     if((typeof self.ds[dsIdx] !== "undefined") && (typeof self.ds[dsIdx].idNameMap !== "undefined")){
       var camId = null
       for(var curCamId in self.ds[dsIdx].idNameMap){
-        console.log("Checking if camdId "+curCamId+" with name: "+self.ds[dsIdx].idNameMap[curCamId]+" matches name "+camName)
+        // console.log("Checking if camdId "+curCamId+" with name: "+self.ds[dsIdx].idNameMap[curCamId]+" matches name "+camName)
         if(self.ds[dsIdx].idNameMap[curCamId] === camName){
+          console.log("Found id of cam: "+camName)
           camId = curCamId
           break
         }
@@ -158,15 +177,11 @@ module.exports = NodeHelper.create({
         if((typeof self.ds[dsIdx].ptzPresetInfo !== "undefined")&& (typeof self.ds[dsIdx].ptzPresetInfo[camId] !== "undefined")){
           if((position >= 0) && (position < Object.keys(self.ds[dsIdx].ptzPresetInfo[camId]).length)){
             self.ds[dsIdx].syno.ss.goPresetPtz({'cameraId':camId, 'position':position}, function(goPtzError,goPtzData){
-              if(goPtzError){
-                console.log("Position could not be changed: "+JSON.stringify(goPtzError))
-              } else {
-                self.sendSocketNotification("DS_CHANGED_POSITION", {
-                  dsIdx: curDsIdx,
-                  camName: curCamName,
-                  position: curPosition
-                })
-              }
+              self.sendSocketNotification("DS_CHANGED_POSITION", {
+                dsIdx: curDsIdx,
+                camName: curCamName,
+                position: curPosition
+              })
             })
           }
         } else {
