@@ -131,7 +131,7 @@ module.exports = NodeHelper.create({
             console.log("Could not find any valid cam for ds with idx: "+curDsIdx)
           }
         } else if (error){
-          console.log("Problem during fetch of cams of ds with idx: ":curDsIdx)
+          console.log("Problem during fetch of cams of ds with idx: "+curDsIdx)
           console.log(JSON.stringify(error, null, 2))
         }
       })
