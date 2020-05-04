@@ -485,38 +485,17 @@ Module.register('MMM-SynologySurveillance', {
   socketNotificationReceived: function (notification, payload) {
     if(notification === "DS_STREAM_INFO"){
       console.log("Got new Stream info of ds with id: "+payload.dsIdx)
-      console.log(JSON.stringify(payload, null, 3))
-      if(typeof this.dsStreamInfo[payload.dsIdx] !== "undefined") {
-        var updated = false
-        for(var curKey in Object.keys(this.dsStreamInfo[payload.dsIdx])){
-          if(typeof payload.camStreams[curKey] !== "undefined"){
-            if(this.dsStreamInfo[payload.dsIdx][curKey] !== payload.camStreams[curKey]){
-              this.dsStreamInfo[payload.dsIdx] = payload.camStreams
-              this.updateDom(this.config.animationSpeed)
-              console.log("URL of cam: "+curKey+" changed. Updating view!")
-              updated = true
-              break
-            }
-          } else {
-            console.log("URL of cam: "+curKey+" changed. Updating view!")
-            this.dsStreamInfo[payload.dsIdx] = {}
-            updated = true
-            break
-          }
-        }
-
-        for(var curKey in payload.camStreams){
-          if(this.dsStreamInfo[payload.dsIdx][curKey] !== payload.camStreams[curKey]){
-            this.dsStreamInfo[payload.dsIdx] = payload.camStreams
-            this.updateDom(this.config.animationSpeed)
-            console.log("URL of cam: "+curKey+" changed. Updating view!")
-            updated = true
-            break
-          }
-        }
-
-        if(!updated){
-          console.log("No url changed. Update skipped!")
+      // console.log(JSON.stringify(payload, null, 3))
+      if(
+        (typeof this.dsStreamInfo[payload.dsIdx] !== "undefined") && 
+        (this.config.onlyRefreshIfUrlChanges)
+      ){
+        if(JSON.stringify(this.dsStreamInfo[payload.dsIdx]) !== JSON.stringify(payload.camStreams)){
+          this.dsStreamInfo[payload.dsIdx] = payload.camStreams
+          this.updateDom(this.config.animationSpeed)
+          console.log("Some urls of ds with id "+payload.dsIdx+" changed. Updating view!")
+        } else {
+          console.log("No urls of ds with id "+payload.dsIdx+" changed. Skipping update of the view!")
         }
       } else {
         console.log("Did not have any url information of ds with id: "+payload.dsIdx+". Updating view!")
@@ -530,9 +509,20 @@ Module.register('MMM-SynologySurveillance', {
         this.updateDom(this.config.animationSpeed)
       }
     } else if (notification === "DS_PTZ_PRESET_INFO"){
-      this.dsPresetInfo[payload.dsIdx][payload.camName] = payload.ptzData
-      if(this.config.showBigPositions || this.config.showPositions){
-        this.updateDom(this.config.animationSpeed)
+      if(self.config.onlyRefreshIfUrlChanges){
+        if(JSON.stringify(this.dsPresetInfo[payload.dsIdx][payload.camName]) !== JSON.stringify(payload.ptzData)){
+          this.dsPresetInfo[payload.dsIdx][payload.camName] = payload.ptzData
+          if(this.config.showBigPositions || this.config.showPositions){
+            this.updateDom(this.config.animationSpeed)
+          }
+        } else {
+          console.log("Skipping position updates of ds with id: "+payload.dsIdx+" because no values changed!")
+        }
+      } else {
+        this.dsPresetInfo[payload.dsIdx][payload.camName] = payload.ptzData
+        if(this.config.showBigPositions || this.config.showPositions){
+          this.updateDom(this.config.animationSpeed)
+        }
       }
     } else if(notification === "DS_CHANGED_POSITION"){
       if(this.dsPresetCurPosition[payload.dsIdx][payload.camName] !== payload.position){
