@@ -303,7 +303,7 @@ Module.register('MMM-SynologySurveillance', {
                     //this.dsPresetInfo[curDsIdx][this.config.ds[curDsIdx].cams[curCamIdx].name]
                     for(var curPreset in this.dsPresetInfo[curDsIdx][curCamName]) {
                       let curPosition = this.dsPresetInfo[curDsIdx][curCamName][curPreset].position
-                      console.log("CUR_POS: "+curPosition + " curActive: "+this.dsPresetCurPosition[curDsIdx][curCamName])
+                      // console.log("CUR_POS: "+curPosition + " curActive: "+this.dsPresetCurPosition[curDsIdx][curCamName])
                       let curPositionName = this.dsPresetInfo[curDsIdx][curCamName][curPreset].name
       
                       var position = document.createElement("div")
