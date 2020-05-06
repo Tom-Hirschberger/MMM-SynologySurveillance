@@ -72,21 +72,23 @@ module.exports = NodeHelper.create({
           self.ds[curDsIdx].idNameMap = idNameMap
 
           self.ds[curDsIdx].ptzPresetInfo = {}
-          for(let curCamId in idNameMap){
-            self.ds[curDsIdx].ptzPresetInfo[curCamId] = []
-            syno.ss.listPresetPtz({'cameraId':curCamId}, function(ptzError,ptzData){
-              // console.log("CurDS: "+curDsIdx+" curCamId: "+curCamId+": "+JSON.stringify(ptzData,null,2))
+          if(self.config.showPositions || self.config.showBigPositions){
+            for(let curCamId in idNameMap){
+              self.ds[curDsIdx].ptzPresetInfo[curCamId] = []
+              syno.ss.listPresetPtz({'cameraId':curCamId}, function(ptzError,ptzData){
+                console.log("CurDS: "+curDsIdx+" curCamId: "+curCamId+": "+JSON.stringify(ptzData,null,2))
 
-              if(typeof ptzData !== "undefined"){
-                self.ds[curDsIdx].ptzPresetInfo[curCamId] = ptzData.presets
-                self.sendSocketNotification("DS_PTZ_PRESET_INFO", {
-                  dsIdx: curDsIdx,
-                  curCamId: curCamId,
-                  camName: idNameMap[curCamId],
-                  ptzData: ptzData.presets
-                })
-              }
-            })
+                if(typeof ptzData !== "undefined"){
+                  self.ds[curDsIdx].ptzPresetInfo[curCamId] = ptzData.presets
+                  self.sendSocketNotification("DS_PTZ_PRESET_INFO", {
+                    dsIdx: curDsIdx,
+                    curCamId: curCamId,
+                    camName: idNameMap[curCamId],
+                    ptzData: ptzData.presets
+                  })
+                }
+              })
+            }             
           }
     
           if(idString !== ""){
