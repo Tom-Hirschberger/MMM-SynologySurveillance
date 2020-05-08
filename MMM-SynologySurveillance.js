@@ -134,6 +134,7 @@ Module.register('MMM-SynologySurveillance', {
             } else {
               var cam = document.createElement("i")
                 cam.className = "cam nourl fa "+this.config.noUrlIcon
+                cam.addEventListener("click", ()=>{self.sendSocketNotification("REFRESH_URLS")})
                 innerCamWrapperClassName += " nourl"
             }
             innerCamWrapper.className = innerCamWrapperClassName
@@ -217,6 +218,7 @@ Module.register('MMM-SynologySurveillance', {
                   } else {
                     var cam = document.createElement("i")
                       cam.className = "cam nourl fa "+this.config.noUrlIcon
+                      cam.addEventListener("click", ()=>{self.sendSocketNotification("REFRESH_URLS")})
                       innerCamWrapperClassName += " nourl"
                   }
                   innerCamWrapper.className = innerCamWrapperClassName
@@ -291,6 +293,7 @@ Module.register('MMM-SynologySurveillance', {
                   } else {
                     var cam = document.createElement("i")
                       cam.className = "cam nourl fa "+this.config.noUrlIcon
+                      cam.addEventListener("click", ()=>{self.sendSocketNotification("REFRESH_URLS")})
                       innerCamWrapperClassName += " nourl"
                   }
                   innerCamWrapper.className = innerCamWrapperClassName
@@ -472,6 +475,8 @@ Module.register('MMM-SynologySurveillance', {
       if(this.config.showBigPositions || this.config.showPositions){
         this.updateDom(this.config.animationSpeed)
       }
+    } else if (notification === 'SYNO_REFRESH_URLS'){
+      this.sendSocketNotification("REFRESH_URLS")
     } else if (notification === 'CHANGED_PROFILE'){
       if(typeof payload.to !== 'undefined'){
         this.currentProfile = payload.to
