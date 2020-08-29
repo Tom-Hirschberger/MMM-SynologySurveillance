@@ -134,6 +134,7 @@ Module.register('MMM-SynologySurveillance', {
             } else {
               var cam = document.createElement("i")
                 cam.className = "cam nourl fa "+this.config.noUrlIcon
+                cam.addEventListener("click", ()=>{self.sendSocketNotification("REFRESH_URLS")})
                 innerCamWrapperClassName += " nourl"
             }
             innerCamWrapper.className = innerCamWrapperClassName
@@ -144,29 +145,32 @@ Module.register('MMM-SynologySurveillance', {
             let innerPositionWrapper = document.createElement("div")
               innerPositionWrapper.className = "innerPositionWrapper big"
               //this.dsPresetInfo[curDsIdx][this.config.ds[curDsIdx].cams[curCamIdx].name]
+              let curPosition = 0
               for(var curPreset in this.dsPresetInfo[curDsIdx][curCamName]) {
-                let curPosition = this.dsPresetInfo[curDsIdx][curCamName][curPreset].position
+                let thisPosition = curPosition
                 console.log("CUR_POS: "+curPosition + " curActive: "+this.dsPresetCurPosition[curDsIdx][curCamName])
                 let curPositionName = this.dsPresetInfo[curDsIdx][curCamName][curPreset].name
 
                 var position = document.createElement("div")
                   //this.dsPresetCurPosition[curDsIdx][this.config.ds[curDsIdx].cams[curCamIdx].name] 
                   position.className = "position big"
-                  if(this.dsPresetCurPosition[curDsIdx][curCamName] === curPosition){
+                  if(this.dsPresetCurPosition[curDsIdx][curCamName] === thisPosition){
                     var positionSelected = document.createElement("div")
                       positionSelected.className = "selected"
                     position.appendChild(positionSelected)
                   }
+
                   position.addEventListener("click", ()=>{
-                    self.dsPresetCurPosition[curDsIdx][curCamName] = curPosition
+                    self.dsPresetCurPosition[curDsIdx][curCamName] = thisPosition
                     self.updateDom(self.config.animationSpeed)
                     self.sendSocketNotification("DS_CHANGE_POSITION", {
                       dsIdx: curDsIdx,
                       camName: curCamName,
-                      position: curPosition
+                      position: thisPosition
                     }
                   )})
                 innerPositionWrapper.appendChild(position)
+                curPosition += 1
               }
             camWrapper.appendChild(innerPositionWrapper)
           }
@@ -217,6 +221,7 @@ Module.register('MMM-SynologySurveillance', {
                   } else {
                     var cam = document.createElement("i")
                       cam.className = "cam nourl fa "+this.config.noUrlIcon
+                      cam.addEventListener("click", ()=>{self.sendSocketNotification("REFRESH_URLS")})
                       innerCamWrapperClassName += " nourl"
                   }
                   innerCamWrapper.className = innerCamWrapperClassName
@@ -226,8 +231,9 @@ Module.register('MMM-SynologySurveillance', {
                 if(self.config.showPositions){
                   let innerPositionWrapper = document.createElement("div")
                     innerPositionWrapper.className = "innerPositionWrapper"
+                    let curPosition = 0
                     for(var curPreset in this.dsPresetInfo[curDsIdx][curCamName]) {
-                      let curPosition = this.dsPresetInfo[curDsIdx][curCamName][curPreset].position
+                      let thisPosition = curPosition
                       let curPositionName = this.dsPresetInfo[curDsIdx][curCamName][curPreset].name
       
                       var position = document.createElement("div")
@@ -238,15 +244,16 @@ Module.register('MMM-SynologySurveillance', {
                           position.appendChild(positionSelected)
                         }
                         position.addEventListener("click", ()=>{
-                          self.dsPresetCurPosition[curDsIdx][curCamName] = curPosition
+                          self.dsPresetCurPosition[curDsIdx][curCamName] = thisPosition
                           self.updateDom(self.config.animationSpeed)
                           self.sendSocketNotification("DS_CHANGE_POSITION", {
                             dsIdx: curDsIdx,
                             camName: curCamName,
-                            position: curPosition
+                            position: thisPosition
                           }
                         )})
                       innerPositionWrapper.appendChild(position)
+                      curPosition += 1
                     }
                   camWrapper.appendChild(innerPositionWrapper)
                 }
@@ -291,6 +298,7 @@ Module.register('MMM-SynologySurveillance', {
                   } else {
                     var cam = document.createElement("i")
                       cam.className = "cam nourl fa "+this.config.noUrlIcon
+                      cam.addEventListener("click", ()=>{self.sendSocketNotification("REFRESH_URLS")})
                       innerCamWrapperClassName += " nourl"
                   }
                   innerCamWrapper.className = innerCamWrapperClassName
@@ -301,9 +309,10 @@ Module.register('MMM-SynologySurveillance', {
                   let innerPositionWrapper = document.createElement("div")
                     innerPositionWrapper.className = "innerPositionWrapper big"
                     //this.dsPresetInfo[curDsIdx][this.config.ds[curDsIdx].cams[curCamIdx].name]
+                    let curPosition = 0
                     for(var curPreset in this.dsPresetInfo[curDsIdx][curCamName]) {
-                      let curPosition = this.dsPresetInfo[curDsIdx][curCamName][curPreset].position
-                      console.log("CUR_POS: "+curPosition + " curActive: "+this.dsPresetCurPosition[curDsIdx][curCamName])
+                      // let curPosition = this.dsPresetInfo[curDsIdx][curCamName][curPreset].position
+                      // console.log("CUR_POS: "+curPosition + " curActive: "+this.dsPresetCurPosition[curDsIdx][curCamName])
                       let curPositionName = this.dsPresetInfo[curDsIdx][curCamName][curPreset].name
       
                       var position = document.createElement("div")
@@ -314,16 +323,18 @@ Module.register('MMM-SynologySurveillance', {
                             positionSelected.className = "selected"
                           position.appendChild(positionSelected)
                         }
+                        let thisPosition = curPosition
                         position.addEventListener("click", ()=>{
-                          self.dsPresetCurPosition[curDsIdx][curCamName] = curPosition
+                          self.dsPresetCurPosition[curDsIdx][curCamName] = thisPosition
                           self.updateDom(self.config.animationSpeed)
                           self.sendSocketNotification("DS_CHANGE_POSITION", {
                             dsIdx: curDsIdx,
                             camName: curCamName,
-                            position: curPosition
+                            position: thisPosition
                           }
                         )})
                       innerPositionWrapper.appendChild(position)
+                      curPosition += 1
                     }
                   camWrapper.appendChild(innerPositionWrapper)
                 }
@@ -472,6 +483,8 @@ Module.register('MMM-SynologySurveillance', {
       if(this.config.showBigPositions || this.config.showPositions){
         this.updateDom(this.config.animationSpeed)
       }
+    } else if (notification === 'SYNO_REFRESH_URLS'){
+      this.sendSocketNotification("REFRESH_URLS")
     } else if (notification === 'CHANGED_PROFILE'){
       if(typeof payload.to !== 'undefined'){
         this.currentProfile = payload.to
@@ -485,38 +498,17 @@ Module.register('MMM-SynologySurveillance', {
   socketNotificationReceived: function (notification, payload) {
     if(notification === "DS_STREAM_INFO"){
       console.log("Got new Stream info of ds with id: "+payload.dsIdx)
-      console.log(JSON.stringify(payload, null, 3))
-      if(typeof this.dsStreamInfo[payload.dsIdx] !== "undefined") {
-        var updated = false
-        for(var curKey in Object.keys(this.dsStreamInfo[payload.dsIdx])){
-          if(typeof payload.camStreams[curKey] !== "undefined"){
-            if(this.dsStreamInfo[payload.dsIdx][curKey] !== payload.camStreams[curKey]){
-              this.dsStreamInfo[payload.dsIdx] = payload.camStreams
-              this.updateDom(this.config.animationSpeed)
-              console.log("URL of cam: "+curKey+" changed. Updating view!")
-              updated = true
-              break
-            }
-          } else {
-            console.log("URL of cam: "+curKey+" changed. Updating view!")
-            this.dsStreamInfo[payload.dsIdx] = {}
-            updated = true
-            break
-          }
-        }
-
-        for(var curKey in payload.camStreams){
-          if(this.dsStreamInfo[payload.dsIdx][curKey] !== payload.camStreams[curKey]){
-            this.dsStreamInfo[payload.dsIdx] = payload.camStreams
-            this.updateDom(this.config.animationSpeed)
-            console.log("URL of cam: "+curKey+" changed. Updating view!")
-            updated = true
-            break
-          }
-        }
-
-        if(!updated){
-          console.log("No url changed. Update skipped!")
+      // console.log(JSON.stringify(payload, null, 3))
+      if(
+        (typeof this.dsStreamInfo[payload.dsIdx] !== "undefined") && 
+        (this.config.onlyRefreshIfUrlChanges)
+      ){
+        if(JSON.stringify(this.dsStreamInfo[payload.dsIdx]) !== JSON.stringify(payload.camStreams)){
+          this.dsStreamInfo[payload.dsIdx] = payload.camStreams
+          this.updateDom(this.config.animationSpeed)
+          console.log("Some urls of ds with id "+payload.dsIdx+" changed. Updating view!")
+        } else {
+          console.log("No urls of ds with id "+payload.dsIdx+" changed. Skipping update of the view!")
         }
       } else {
         console.log("Did not have any url information of ds with id: "+payload.dsIdx+". Updating view!")
@@ -530,9 +522,20 @@ Module.register('MMM-SynologySurveillance', {
         this.updateDom(this.config.animationSpeed)
       }
     } else if (notification === "DS_PTZ_PRESET_INFO"){
-      this.dsPresetInfo[payload.dsIdx][payload.camName] = payload.ptzData
-      if(this.config.showBigPositions || this.config.showPositions){
-        this.updateDom(this.config.animationSpeed)
+      if(self.config.onlyRefreshIfUrlChanges){
+        if(JSON.stringify(this.dsPresetInfo[payload.dsIdx][payload.camName]) !== JSON.stringify(payload.ptzData)){
+          this.dsPresetInfo[payload.dsIdx][payload.camName] = payload.ptzData
+          if(this.config.showBigPositions || this.config.showPositions){
+            this.updateDom(this.config.animationSpeed)
+          }
+        } else {
+          console.log("Skipping position updates of ds with id: "+payload.dsIdx+" because no values changed!")
+        }
+      } else {
+        this.dsPresetInfo[payload.dsIdx][payload.camName] = payload.ptzData
+        if(this.config.showBigPositions || this.config.showPositions){
+          this.updateDom(this.config.animationSpeed)
+        }
       }
     } else if(notification === "DS_CHANGED_POSITION"){
       if(this.dsPresetCurPosition[payload.dsIdx][payload.camName] !== payload.position){
