@@ -145,29 +145,32 @@ Module.register('MMM-SynologySurveillance', {
             let innerPositionWrapper = document.createElement("div")
               innerPositionWrapper.className = "innerPositionWrapper big"
               //this.dsPresetInfo[curDsIdx][this.config.ds[curDsIdx].cams[curCamIdx].name]
+              let curPosition = 0
               for(var curPreset in this.dsPresetInfo[curDsIdx][curCamName]) {
-                let curPosition = this.dsPresetInfo[curDsIdx][curCamName][curPreset].position
+                let thisPosition = curPosition
                 console.log("CUR_POS: "+curPosition + " curActive: "+this.dsPresetCurPosition[curDsIdx][curCamName])
                 let curPositionName = this.dsPresetInfo[curDsIdx][curCamName][curPreset].name
 
                 var position = document.createElement("div")
                   //this.dsPresetCurPosition[curDsIdx][this.config.ds[curDsIdx].cams[curCamIdx].name] 
                   position.className = "position big"
-                  if(this.dsPresetCurPosition[curDsIdx][curCamName] === curPosition){
+                  if(this.dsPresetCurPosition[curDsIdx][curCamName] === thisPosition){
                     var positionSelected = document.createElement("div")
                       positionSelected.className = "selected"
                     position.appendChild(positionSelected)
                   }
+
                   position.addEventListener("click", ()=>{
-                    self.dsPresetCurPosition[curDsIdx][curCamName] = curPosition
+                    self.dsPresetCurPosition[curDsIdx][curCamName] = thisPosition
                     self.updateDom(self.config.animationSpeed)
                     self.sendSocketNotification("DS_CHANGE_POSITION", {
                       dsIdx: curDsIdx,
                       camName: curCamName,
-                      position: curPosition
+                      position: thisPosition
                     }
                   )})
                 innerPositionWrapper.appendChild(position)
+                curPosition += 1
               }
             camWrapper.appendChild(innerPositionWrapper)
           }
@@ -228,8 +231,9 @@ Module.register('MMM-SynologySurveillance', {
                 if(self.config.showPositions){
                   let innerPositionWrapper = document.createElement("div")
                     innerPositionWrapper.className = "innerPositionWrapper"
+                    let curPosition = 0
                     for(var curPreset in this.dsPresetInfo[curDsIdx][curCamName]) {
-                      let curPosition = this.dsPresetInfo[curDsIdx][curCamName][curPreset].position
+                      let thisPosition = curPosition
                       let curPositionName = this.dsPresetInfo[curDsIdx][curCamName][curPreset].name
       
                       var position = document.createElement("div")
@@ -240,15 +244,16 @@ Module.register('MMM-SynologySurveillance', {
                           position.appendChild(positionSelected)
                         }
                         position.addEventListener("click", ()=>{
-                          self.dsPresetCurPosition[curDsIdx][curCamName] = curPosition
+                          self.dsPresetCurPosition[curDsIdx][curCamName] = thisPosition
                           self.updateDom(self.config.animationSpeed)
                           self.sendSocketNotification("DS_CHANGE_POSITION", {
                             dsIdx: curDsIdx,
                             camName: curCamName,
-                            position: curPosition
+                            position: thisPosition
                           }
                         )})
                       innerPositionWrapper.appendChild(position)
+                      curPosition += 1
                     }
                   camWrapper.appendChild(innerPositionWrapper)
                 }
@@ -304,8 +309,9 @@ Module.register('MMM-SynologySurveillance', {
                   let innerPositionWrapper = document.createElement("div")
                     innerPositionWrapper.className = "innerPositionWrapper big"
                     //this.dsPresetInfo[curDsIdx][this.config.ds[curDsIdx].cams[curCamIdx].name]
+                    let curPosition = 0
                     for(var curPreset in this.dsPresetInfo[curDsIdx][curCamName]) {
-                      let curPosition = this.dsPresetInfo[curDsIdx][curCamName][curPreset].position
+                      // let curPosition = this.dsPresetInfo[curDsIdx][curCamName][curPreset].position
                       // console.log("CUR_POS: "+curPosition + " curActive: "+this.dsPresetCurPosition[curDsIdx][curCamName])
                       let curPositionName = this.dsPresetInfo[curDsIdx][curCamName][curPreset].name
       
@@ -317,16 +323,18 @@ Module.register('MMM-SynologySurveillance', {
                             positionSelected.className = "selected"
                           position.appendChild(positionSelected)
                         }
+                        let thisPosition = curPosition
                         position.addEventListener("click", ()=>{
-                          self.dsPresetCurPosition[curDsIdx][curCamName] = curPosition
+                          self.dsPresetCurPosition[curDsIdx][curCamName] = thisPosition
                           self.updateDom(self.config.animationSpeed)
                           self.sendSocketNotification("DS_CHANGE_POSITION", {
                             dsIdx: curDsIdx,
                             camName: curCamName,
-                            position: curPosition
+                            position: thisPosition
                           }
                         )})
                       innerPositionWrapper.appendChild(position)
+                      curPosition += 1
                     }
                   camWrapper.appendChild(innerPositionWrapper)
                 }

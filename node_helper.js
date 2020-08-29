@@ -159,7 +159,6 @@ module.exports = NodeHelper.create({
     const self = this
     let curDsIdx = dsIdx
     let curCamName = camName
-    let curPosition = position
     while(self.urlUpdateInProgress){
       Sleep(1000)
     }
@@ -178,11 +177,14 @@ module.exports = NodeHelper.create({
       if(camId){
         if((typeof self.ds[dsIdx].ptzPresetInfo !== "undefined")&& (typeof self.ds[dsIdx].ptzPresetInfo[camId] !== "undefined")){
           if((position >= 0) && (position < Object.keys(self.ds[dsIdx].ptzPresetInfo[camId]).length)){
-            self.ds[dsIdx].syno.ss.goPresetPtz({'cameraId':camId, 'position':position}, function(goPtzError,goPtzData){
+            console.log("Changing position of cam")
+            var curRealPosition = self.ds[dsIdx].ptzPresetInfo[camId][position]["position"]
+            console.log("New position with idx: "+position+" is "+curRealPosition)
+            self.ds[dsIdx].syno.ss.goPresetPtz({'cameraId':camId, 'position':curRealPosition}, function(goPtzError,goPtzData){
               self.sendSocketNotification("DS_CHANGED_POSITION", {
                 dsIdx: curDsIdx,
                 camName: curCamName,
-                position: curPosition
+                position: position
               })
             })
           }
