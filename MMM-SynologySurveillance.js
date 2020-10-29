@@ -16,6 +16,7 @@ Module.register('MMM-SynologySurveillance', {
     onlyRefreshIfUrlChanges: true,
     animationSpeed: 500,
     vertical: true,
+    skipOnPrivilegeError: true,
   },
 
   /**

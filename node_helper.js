@@ -141,10 +141,16 @@ module.exports = NodeHelper.create({
         } else if (error){
           console.log("Problem during fetch of cams of ds with idx: "+curDsIdx)
           console.log(JSON.stringify(error, null, 2))
-          self.sendSocketNotification("DS_STREAM_INFO",{
-            dsIdx: curDsIdx,
-            camStreams: {},
-          })
+          if ((typeof error["code"] !== "undefined") &&
+              (error["code"] === 105) &&
+              (self.config.skipOnPrivilegeError)){
+            console.log("Got privilege error but skipping is activated!")
+          } else {
+            self.sendSocketNotification("DS_STREAM_INFO",{
+              dsIdx: curDsIdx,
+              camStreams: {},
+            })
+          }
         }
       })
     }
