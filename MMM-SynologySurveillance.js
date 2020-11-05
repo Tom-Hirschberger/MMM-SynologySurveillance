@@ -147,31 +147,35 @@ Module.register('MMM-SynologySurveillance', {
               innerPositionWrapper.className = "innerPositionWrapper big"
               //this.dsPresetInfo[curDsIdx][this.config.ds[curDsIdx].cams[curCamIdx].name]
               let curPosition = 0
-              for(var curPreset in this.dsPresetInfo[curDsIdx][curCamName]) {
-                let thisPosition = curPosition
-                console.log("CUR_POS: "+curPosition + " curActive: "+this.dsPresetCurPosition[curDsIdx][curCamName])
-                let curPositionName = this.dsPresetInfo[curDsIdx][curCamName][curPreset].name
+              if((typeof this.dsPresetInfo[curDsIdx] !== "undefined") &&
+                       (typeof this.dsPresetInfo[curDsIdx][curCamName] !== "undefined")
+              ){
+                for(var curPreset in this.dsPresetInfo[curDsIdx][curCamName]) {
+                  let thisPosition = curPosition
+                  console.log("CUR_POS: "+curPosition + " curActive: "+this.dsPresetCurPosition[curDsIdx][curCamName])
+                  let curPositionName = this.dsPresetInfo[curDsIdx][curCamName][curPreset].name
 
-                var position = document.createElement("div")
-                  //this.dsPresetCurPosition[curDsIdx][this.config.ds[curDsIdx].cams[curCamIdx].name] 
-                  position.className = "position big"
-                  if(this.dsPresetCurPosition[curDsIdx][curCamName] === thisPosition){
-                    var positionSelected = document.createElement("div")
+                  var position = document.createElement("div")
+                    //this.dsPresetCurPosition[curDsIdx][this.config.ds[curDsIdx].cams[curCamIdx].name] 
+                    position.className = "position big"
+                    if(this.dsPresetCurPosition[curDsIdx][curCamName] === thisPosition){
+                      var positionSelected = document.createElement("div")
                       positionSelected.className = "selected"
-                    position.appendChild(positionSelected)
-                  }
-
-                  position.addEventListener("click", ()=>{
-                    self.dsPresetCurPosition[curDsIdx][curCamName] = thisPosition
-                    self.updateDom(self.config.animationSpeed)
-                    self.sendSocketNotification("DS_CHANGE_POSITION", {
-                      dsIdx: curDsIdx,
-                      camName: curCamName,
-                      position: thisPosition
+                      position.appendChild(positionSelected)
                     }
-                  )})
-                innerPositionWrapper.appendChild(position)
-                curPosition += 1
+
+                    position.addEventListener("click", ()=>{
+                      self.dsPresetCurPosition[curDsIdx][curCamName] = thisPosition
+                      self.updateDom(self.config.animationSpeed)
+                      self.sendSocketNotification("DS_CHANGE_POSITION", {
+                        dsIdx: curDsIdx,
+                        camName: curCamName,
+                        position: thisPosition
+                      }
+                    )})
+                  innerPositionWrapper.appendChild(position)
+                  curPosition += 1
+                }
               }
             camWrapper.appendChild(innerPositionWrapper)
           }
@@ -233,28 +237,32 @@ Module.register('MMM-SynologySurveillance', {
                   let innerPositionWrapper = document.createElement("div")
                     innerPositionWrapper.className = "innerPositionWrapper"
                     let curPosition = 0
-                    for(var curPreset in this.dsPresetInfo[curDsIdx][curCamName]) {
-                      let thisPosition = curPosition
-                      let curPositionName = this.dsPresetInfo[curDsIdx][curCamName][curPreset].name
-      
-                      var position = document.createElement("div")
-                        position.className = "position"
-                        if(this.dsPresetCurPosition[curDsIdx][curCamName] === curPosition){
-                          var positionSelected = document.createElement("div")
-                            positionSelected.className = "selected"
-                          position.appendChild(positionSelected)
-                        }
-                        position.addEventListener("click", ()=>{
-                          self.dsPresetCurPosition[curDsIdx][curCamName] = thisPosition
-                          self.updateDom(self.config.animationSpeed)
-                          self.sendSocketNotification("DS_CHANGE_POSITION", {
-                            dsIdx: curDsIdx,
-                            camName: curCamName,
-                            position: thisPosition
+                    if((typeof this.dsPresetInfo[curDsIdx] !== "undefined") &&
+                       (typeof this.dsPresetInfo[curDsIdx][curCamName] !== "undefined")
+                    ){
+                      for(var curPreset in this.dsPresetInfo[curDsIdx][curCamName]) {
+                        let thisPosition = curPosition
+                        let curPositionName = this.dsPresetInfo[curDsIdx][curCamName][curPreset].name
+        
+                        var position = document.createElement("div")
+                          position.className = "position"
+                          if(this.dsPresetCurPosition[curDsIdx][curCamName] === curPosition){
+                            var positionSelected = document.createElement("div")
+                              positionSelected.className = "selected"
+                            position.appendChild(positionSelected)
                           }
-                        )})
-                      innerPositionWrapper.appendChild(position)
-                      curPosition += 1
+                          position.addEventListener("click", ()=>{
+                            self.dsPresetCurPosition[curDsIdx][curCamName] = thisPosition
+                            self.updateDom(self.config.animationSpeed)
+                            self.sendSocketNotification("DS_CHANGE_POSITION", {
+                              dsIdx: curDsIdx,
+                              camName: curCamName,
+                              position: thisPosition
+                            }
+                          )})
+                        innerPositionWrapper.appendChild(position)
+                        curPosition += 1
+                      }
                     }
                   camWrapper.appendChild(innerPositionWrapper)
                 }
@@ -311,31 +319,35 @@ Module.register('MMM-SynologySurveillance', {
                     innerPositionWrapper.className = "innerPositionWrapper big"
                     //this.dsPresetInfo[curDsIdx][this.config.ds[curDsIdx].cams[curCamIdx].name]
                     let curPosition = 0
-                    for(var curPreset in this.dsPresetInfo[curDsIdx][curCamName]) {
-                      // let curPosition = this.dsPresetInfo[curDsIdx][curCamName][curPreset].position
-                      // console.log("CUR_POS: "+curPosition + " curActive: "+this.dsPresetCurPosition[curDsIdx][curCamName])
-                      let curPositionName = this.dsPresetInfo[curDsIdx][curCamName][curPreset].name
-      
-                      var position = document.createElement("div")
-                        //this.dsPresetCurPosition[curDsIdx][this.config.ds[curDsIdx].cams[curCamIdx].name] 
-                        position.className = "position big"
-                        if(this.dsPresetCurPosition[curDsIdx][curCamName] === curPosition){
-                          var positionSelected = document.createElement("div")
-                            positionSelected.className = "selected"
-                          position.appendChild(positionSelected)
-                        }
-                        let thisPosition = curPosition
-                        position.addEventListener("click", ()=>{
-                          self.dsPresetCurPosition[curDsIdx][curCamName] = thisPosition
-                          self.updateDom(self.config.animationSpeed)
-                          self.sendSocketNotification("DS_CHANGE_POSITION", {
-                            dsIdx: curDsIdx,
-                            camName: curCamName,
-                            position: thisPosition
+                    if((typeof this.dsPresetInfo[curDsIdx] !== "undefined") &&
+                       (typeof this.dsPresetInfo[curDsIdx][curCamName] !== "undefined")
+                    ){
+                      for(var curPreset in this.dsPresetInfo[curDsIdx][curCamName]) {
+                        // let curPosition = this.dsPresetInfo[curDsIdx][curCamName][curPreset].position
+                        // console.log("CUR_POS: "+curPosition + " curActive: "+this.dsPresetCurPosition[curDsIdx][curCamName])
+                        let curPositionName = this.dsPresetInfo[curDsIdx][curCamName][curPreset].name
+        
+                        var position = document.createElement("div")
+                          //this.dsPresetCurPosition[curDsIdx][this.config.ds[curDsIdx].cams[curCamIdx].name] 
+                          position.className = "position big"
+                          if(this.dsPresetCurPosition[curDsIdx][curCamName] === curPosition){
+                            var positionSelected = document.createElement("div")
+                              positionSelected.className = "selected"
+                            position.appendChild(positionSelected)
                           }
-                        )})
-                      innerPositionWrapper.appendChild(position)
-                      curPosition += 1
+                          let thisPosition = curPosition
+                          position.addEventListener("click", ()=>{
+                            self.dsPresetCurPosition[curDsIdx][curCamName] = thisPosition
+                            self.updateDom(self.config.animationSpeed)
+                            self.sendSocketNotification("DS_CHANGE_POSITION", {
+                              dsIdx: curDsIdx,
+                              camName: curCamName,
+                              position: thisPosition
+                            }
+                          )})
+                        innerPositionWrapper.appendChild(position)
+                        curPosition += 1
+                      }
                     }
                   camWrapper.appendChild(innerPositionWrapper)
                 }
