@@ -78,7 +78,8 @@ module.exports = NodeHelper.create({
               syno.ss.listPresetPtz({'cameraId':curCamId}, function(ptzError,ptzData){
                 console.log(self.name+": CurDS: "+curDsIdx+" curCamId: "+curCamId+": "+JSON.stringify(ptzData,null,2))
 
-                if ((typeof ptzError["code"] !== "undefined") &&
+                if ((typeof ptzError !== "undefined") &&
+                    (typeof ptzError["code"] !== "undefined") &&
                     (ptzError["code"] === 105) &&
                     (self.config.skipOnPrivilegeError)){
                   console.log(self.name+": Got privilege error but skipping is activated!")
