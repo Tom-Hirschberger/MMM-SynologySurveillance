@@ -79,6 +79,7 @@ Because the module uses Flexbox Layout instead of Tables there is a lot of css s
 | urlRefreshInterval | The module connects periodically to the discstations to get the current urls (and refreshes the authentication cookie). This option controls the interval (seconds) | Integer | 60 |
 | onlyRefreshIfUrlChanges | Only if some of the urls of the currently visable cams (also the unreachable ones) changed the view is being refreshed if this value is set to true. | Boolean | true |
 | animationSpeed | The refresh of the view can be animated. This options controls the animation speed (milliseconds) | Integer | 500 |
+| skipOnPrivilegeError | Sometimes the disk stations report a privilege error although the user does have valid rights to access the surveillance station. If activated the old urls of this station are kept valid and the module will try to get new urls during the next refresh. | Boolean | true |
 
 ### DiskStations ###
 | Option  | Description | Type |
