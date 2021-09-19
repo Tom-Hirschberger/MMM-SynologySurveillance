@@ -81,7 +81,10 @@ module.exports = NodeHelper.create({
                 if ((typeof ptzError !== "undefined") &&
                     (ptzError !== null) &&
                     (typeof ptzError["code"] !== "undefined") &&
-                    (ptzError["code"] === 105) &&
+                    (
+                      (ptzError["code"] === 105) ||
+                      (ptzError["code"] === 498)
+                    ) &&
                     (self.config.skipOnPrivilegeError)){
                   console.log(self.name+": Got privilege error but skipping is activated!")
                 } else {
@@ -138,7 +141,10 @@ module.exports = NodeHelper.create({
                 console.log(self.name+": Got an  error while trying to fetch the live view data")
                 console.log(self.name+": "+JSON.stringify(liveViewError, null, 2))
                 if ((typeof liveViewError["code"] !== "undefined") &&
-                    (liveViewError["code"] === 105) &&
+                    (
+                      (ptzError["code"] === 105) ||
+                      (ptzError["code"] === 498)
+                    ) &&
                     (self.config.skipOnPrivilegeError)){
                   console.log(self.name+": Got privilege error but skipping is activated!")
                 } else {
