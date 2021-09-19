@@ -160,7 +160,7 @@ module.exports = NodeHelper.create({
           console.log(self.name+": Problem during fetch of cams of ds with idx: "+curDsIdx)
           console.log(self.name+": "+JSON.stringify(error, null, 2))
           if ((typeof error["code"] !== "undefined") &&
-              (error["code"] === 105) &&
+              ((error["code"] === 105) || (error["code"] === 498)) &&
               (self.config.skipOnPrivilegeError)){
             console.log(self.name+": Got privilege error but skipping is activated!")
           } else {
