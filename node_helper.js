@@ -142,8 +142,8 @@ module.exports = NodeHelper.create({
                 console.log(self.name+": "+JSON.stringify(liveViewError, null, 2))
                 if ((typeof liveViewError["code"] !== "undefined") &&
                     (
-                      (ptzError["code"] === 105) ||
-                      (ptzError["code"] === 498)
+                      (liveViewError["code"] === 105) ||
+                      (liveViewError["code"] === 498)
                     ) &&
                     (self.config.skipOnPrivilegeError)){
                   console.log(self.name+": Got privilege error but skipping is activated!")

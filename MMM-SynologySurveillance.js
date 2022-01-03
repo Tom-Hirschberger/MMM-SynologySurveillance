@@ -535,7 +535,7 @@ Module.register('MMM-SynologySurveillance', {
         this.updateDom(this.config.animationSpeed)
       }
     } else if (notification === "DS_PTZ_PRESET_INFO"){
-      if(self.config.onlyRefreshIfUrlChanges){
+      if(this.config.onlyRefreshIfUrlChanges){
         if(JSON.stringify(this.dsPresetInfo[payload.dsIdx][payload.camName]) !== JSON.stringify(payload.ptzData)){
           this.dsPresetInfo[payload.dsIdx][payload.camName] = payload.ptzData
           if(this.config.showBigPositions || this.config.showPositions){
