@@ -16,7 +16,8 @@ Module.register("MMM-SynologySurveillance", {
     animationSpeed: 500,
     vertical: true,
     skipOnPrivilegeError: true,
-    updateDomOnShow: false
+    updateDomOnShow: false,
+    apiVersion: '6.2.2'
   },
 
   /**
@@ -172,7 +173,7 @@ Module.register("MMM-SynologySurveillance", {
         ) {
           var cam = document.createElement("img");
           cam.className = "cam";
-          cam.src = this.dsStreamInfo[curDsIdx][curCamName];
+          cam.src = this.dsStreamInfo[curDsIdx][curCamName]+"&timestamp="+Math.floor(Date.now() / 1000);
         } else {
           var cam = document.createElement("i");
           cam.className = "cam nourl fa " + this.config.noUrlIcon;

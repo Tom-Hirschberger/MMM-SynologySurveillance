@@ -29,7 +29,8 @@ module.exports = NodeHelper.create({
         port: curDs.port,
         account: curDs.user,
         passwd: curDs.password,
-        ignoreCertificateErrors: true
+        ignoreCertificateErrors: true,
+        apiVersion: self.config.apiVersion
       });
 
       syno.dsIdx = curDsIdx;
