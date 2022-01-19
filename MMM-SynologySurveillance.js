@@ -174,7 +174,12 @@ Module.register("MMM-SynologySurveillance", {
         ) {
           var cam = document.createElement("img");
           cam.className = "cam";
-          cam.src = this.dsStreamInfo[curDsIdx][curCamName]+"&timestamp="+Math.floor(Date.now() / 1000);
+          if (self.config.appendTimestampToCamUrl){
+            cam.src = this.dsStreamInfo[curDsIdx][curCamName]+"&timestamp="+Math.floor(Date.now() / 1000);
+          } else {
+            cam.src = this.dsStreamInfo[curDsIdx][curCamName];
+          }
+          
         } else {
           var cam = document.createElement("i");
           cam.className = "cam nourl fa " + this.config.noUrlIcon;
@@ -290,7 +295,11 @@ Module.register("MMM-SynologySurveillance", {
             ) {
               var cam = document.createElement("img");
               cam.className = "cam";
-              cam.src = this.dsStreamInfo[curDsIdx][curCamName];
+              if (self.config.appendTimestampToCamUrl){
+                cam.src = this.dsStreamInfo[curDsIdx][curCamName]+"&timestamp="+Math.floor(Date.now() / 1000);
+              } else {
+                cam.src = this.dsStreamInfo[curDsIdx][curCamName];
+              }
             } else {
               var cam = document.createElement("i");
               cam.className = "cam nourl fa " + this.config.noUrlIcon;
@@ -393,7 +402,11 @@ Module.register("MMM-SynologySurveillance", {
               ) {
                 var cam = document.createElement("img");
                 cam.className = "cam";
-                cam.src = this.dsStreamInfo[curDsIdx][curCamName];
+                if (self.config.appendTimestampToCamUrl){
+                  cam.src = this.dsStreamInfo[curDsIdx][curCamName]+"&timestamp="+Math.floor(Date.now() / 1000);
+                } else {
+                  cam.src = this.dsStreamInfo[curDsIdx][curCamName];
+                }
               } else {
                 var cam = document.createElement("i");
                 cam.className = "cam nourl fa " + this.config.noUrlIcon;
