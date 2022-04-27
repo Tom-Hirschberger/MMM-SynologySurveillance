@@ -137,20 +137,37 @@ module.exports = NodeHelper.create({
                         "undefined" ||
                       !self.config.ds[curDsIdx].replaceHostPart
                     ) {
-                      curDsResult[curCamName] =
-                        liveViewData[curResIdx]["mjpegHttpPath"];
+                      curDsResult[curCamName] = encodeURI(
+                        liveViewData[curResIdx]["mjpegHttpPath"]);
                     } else {
-                      let curUrl = liveViewData[curResIdx]["mjpegHttpPath"];
+                      let curUrl = encodeURI(liveViewData[curResIdx]["mjpegHttpPath"]);
                       //first : is protocal:
                       let newUrl = curUrl.substring(curUrl.indexOf(":") + 1);
                       //second: is port
-                      newUrl = newUrl.substring(newUrl.indexOf(":"));
-                      newUrl =
+                      if (
+                        typeof self.config.ds[curDsIdx].replacePortPart !==
+                          "undefined" ||
+                        self.config.ds[curDsIdx].replacePortPart
+                      ) {
+                        newUrl = newUrl.substring(newUrl.indexOf(":")+1);
+                        newUrl = newUrl.substring(newUrl.indexOf("/"));
+                        newUrl =
+                        self.config.ds[curDsIdx].protocol +
+                        "://" +
+                        self.config.ds[curDsIdx].host +
+                        ":" + 
+                        self.config.ds[curDsIdx].port +
+                        newUrl;
+                      } else {
+                        newUrl =
                         self.config.ds[curDsIdx].protocol +
                         "://" +
                         self.config.ds[curDsIdx].host +
                         newUrl;
+                      }
+
                       curDsResult[curCamName] = newUrl;
+                      
                     }
                   }
                   let curPayload = {
