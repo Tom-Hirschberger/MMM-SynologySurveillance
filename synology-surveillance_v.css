@@ -1,4 +1,4 @@
-.synology-surveillance {
+.MMM-SynologySurveillance .synology-surveillance {
   --column-cnt: 2;
   --cam-bg-color: #2b2c30;
   --cam-name-bg-color: #1b1b1c;
@@ -39,7 +39,7 @@
   flex-wrap: wrap;
 }
 
-.innerPositionWrapper {
+.MMM-SynologySurveillance .innerPositionWrapper {
   min-height: calc(var(--position-size) + 20px);
   justify-content: center;
   align-items: center;
@@ -47,7 +47,7 @@
   flex-wrap: wrap;
 }
 
-.position {
+.MMM-SynologySurveillance .position {
   margin: var(--position-margin);
   padding: 5px;
   height: var(--position-size);
@@ -56,12 +56,12 @@
   border-radius: var(--position-border-radius);
 }
 
-.position.big {
+.MMM-SynologySurveillance .position.big {
   height: var(--position-big-size);
   width: var(--position-big-size);
 }
 
-.position .selected {
+.MMM-SynologySurveillance .position .selected {
   width: 100%;
   min-width: 100%;
   height: 100%;
@@ -70,21 +70,21 @@
   background-color: var(--position-selected-color);
 }
 
-.camWrapper {
+.MMM-SynologySurveillance .camWrapper {
   background-color: var(--cam-bg-color);
   border-radius: var(--cam-wrapper-border-radius);
   padding: var(--padding-camWrapper);
   margin-bottom: 5px;
 }
 
-.camWrapper .name {
+.MMM-SynologySurveillance .camWrapper .name {
   width: 100%;
   background-color: var(--cam-name-bg-color);
   border-radius: var(--name-border-radius);
   margin-bottom: 5px;
 }
 
-.innerCamWrapper {
+.MMM-SynologySurveillance .innerCamWrapper {
   margin: auto;
   display: block;
   width: var(--cam-width);
@@ -92,28 +92,28 @@
   min-height: var(--cam-min-height);
 }
 
-.innerCamWrapper.big {
+.MMM-SynologySurveillance .innerCamWrapper.big {
   margin: auto;
   display: block;
   min-width: var(--cam-big-wrapper-width);
   min-height: var(--cam-big-min-height);
 }
 
-.cam {
+.MMM-SynologySurveillance .cam {
   border-radius: var(--cam-border-radius);
   max-width: 100%;
   margin: auto;
   display: block;
 }
 
-.cam.nourl,
-.cam.currentBig {
+.MMM-SynologySurveillance .cam.nourl,
+.MMM-SynologySurveillance .cam.currentBig {
   min-height: 100%;
   font-size: var(--icon-size);
   position: relative;
   top: var(--icon-postion);
 }
 
-.cam.nourl.big {
+.MMM-SynologySurveillance .cam.nourl.big {
   top: var(--icon-big-postion);
 }
