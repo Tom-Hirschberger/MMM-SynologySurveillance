@@ -39,39 +39,11 @@ module.exports = NodeHelper.create({
             console.log(
               self.name + ": name is present"
             );
-            let curProtocol = curCam.protocol || "http"
-            let curUser = curCam.username || null
-            let curPassword = curCam.password || null
-            let curHost = curCam.host || "localhost"
-            let curPort = curCam.port || null
-            let curStream = curCam.stream || null
-
-            let newUrl = curProtocol+"://"
-            if (curUser != null){
-              newUrl += curUser
+            let curUrl = curCam.url || null
+            
+            if (curUrl != null){
+              curDsResult[curCam.name] = curUrl;
             }
-
-            if (curPassword != null){
-              newUrl += ":"+curPassword+"@"
-            } else if (curUser != null){
-              newUrl += "@"
-            }
-
-            newUrl += curHost
-
-            if (curPort != null){
-              newUrl += ":"+curPort
-            }
-
-            if (curStream != null){
-              newUrl += "/"+curStream
-            }
-
-            console.log(
-              self.name + ": New url is: " + newUrl
-            );
-
-            curDsResult[curCam.name] = newUrl;
           }
         }
 
