@@ -3,12 +3,13 @@
 This module queries the "mjpeg" streams of surveillance cams connected to Synology disk stations and displays one or more cams in columns.
 One selected cam can be displayed in a big single view.
 The cam in the big view can either be switched by notification or by click/touch.
+As of version 0.1.0 it is possible to display any kind of mjpeg stream and / or a mix of synology mjpeg and other mjpeg streams.
 
 Profiles are supported as well. Each cam can be configured with a profiles string that is used to decide if the cam will be displayed in the current view or not.
 
 The urls of the cams will be refreshed preiodically.
 
-Attention: The "mpjeg" streams provide worse quality than the rtsp streams but displaying the rtsp streams is much more and needs some extra tools installed on the pi. If you search for an rtsp module try: https://github.com/shbatm/MMM-RTSPStream.
+Attention: The "mpjeg" streams provide worse quality than the rtsp streams but displaying the rtsp streams is much more and needs some extra tools installed on the pi. If you search for an rtsp module try: https://github.com/shbatm/MMM-RTSPStream or try to convert the rtsp stream to a mjpeg stream. In my [vlc-rtsp2mjpeg-wrapper](https://github.com/Tom-Hirschberger/vlc-rtsp2mjpeg-wrapper) i provide a wrapper script which uses the vlc player to convert a rtsp stream to a mjpeg stream.
 
 Because the module uses Flexbox Layout instead of Tables there is a lot of css styling possiblity.
 
@@ -111,8 +112,13 @@ address: "192.168.178.10",
 
 ### DiskStations
 
+As of version 0.1.0 of the module there are two types of discstations. Either ones of type Synology or dummies which can be used to show mjpeg streams.
+
+#### Synology
+
 | Option                |Description | Type | Default/Mandatory |
 | -------------------- | -------- | ------- | --------- |
+| protocol             | The protocol to use. Either http, https. | String | http/false |
 | host                 | The hostname or ip address of the diskstation to connect to | String | Empty/true |
 | port                 | The port of the diskstation (not the survaillance redirect!)  | Integer | -1/true |
 | user                 | The username to login to the diskstation  | String  | Empty/true |
@@ -122,6 +128,15 @@ address: "192.168.178.10",
 | replacePortPart      | If this option is set to true the prort part in the stream url will be replaced with the values of the config file. I introduce this option because i access my cam with https (port 50001)) but the disk station returns port of http (5000). | Boolean | false |
 | skipOnPrivilegeError | The Diskstation API throws privilage errors randomly. If this option is set to true this errors will be ignored and the last url or position info will be kept. | Boolean | true  |
 
+#### Dummie
+
+Only if the protocol of the discstation is set to "mjpeg" a dummy disc station will be used!
+
+| Option                |Description | Type | Default/Mandatory |
+| -------------------- | -------- | ------- | --------- |
+| protocol             | The protocol to use. Use mjpeg if you want to create a dummy station. | String | http/false |
+| cams                 | The array containing the information about the cams to query | Array | Empty/true |
+
 ### Cams
 
 | Option   | Description | Mandatory  |
@@ -129,6 +144,7 @@ address: "192.168.178.10",
 | name     | The name this camera is listed in the diskstation  | true  |
 | alias    | An alias to use in the module for this camera | false |
 | profiles | An profile string to specify if this cam only should be displayed in specific profiles. If no profile string is provided the camera is visible in all profiles | false |
+| url      | If the cam is part of a dummy discstation you need to specify the url of the mjpeg stream here! | true if part of dummy station |
 
 ## Supported Notifications
 
