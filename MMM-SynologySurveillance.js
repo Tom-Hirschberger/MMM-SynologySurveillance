@@ -156,6 +156,7 @@ Module.register("MMM-SynologySurveillance", {
         let curCamIdx = this.order[this.curBigIdx][1];
         let curCamAlias = this.order[this.curBigIdx][2];
         let curCamName = this.config.ds[curDsIdx].cams[curCamIdx].name;
+        let curDSProtocol = this.config.ds[curDsIdx].protocol;
         let camWrapper = document.createElement("div");
         camWrapper.className =
           "camWrapper big " + curDsIdx + "_" + curCamIdx + " " + curCamAlias;
@@ -174,7 +175,7 @@ Module.register("MMM-SynologySurveillance", {
         ) {
           var cam = document.createElement("img");
           cam.className = "cam";
-          if (self.config.appendTimestampToCamUrl){
+          if ((curDSProtocol !== "mjpeg")&&(self.config.appendTimestampToCamUrl)){
             cam.src = this.dsStreamInfo[curDsIdx][curCamName]+"&timestamp="+Math.floor(Date.now() / 1000);
           } else {
             cam.src = this.dsStreamInfo[curDsIdx][curCamName];
@@ -247,6 +248,7 @@ Module.register("MMM-SynologySurveillance", {
       let curCamIdx = this.order[curOrderIdx][1];
       let curCamAlias = this.order[curOrderIdx][2];
       let curCamName = this.config.ds[curDsIdx].cams[curCamIdx].name;
+      let curDSProtocol = this.config.ds[curDsIdx].protocol;
 
       if (
         typeof this.config.ds[curDsIdx].cams[curCamIdx].profiles ===
@@ -295,7 +297,7 @@ Module.register("MMM-SynologySurveillance", {
             ) {
               var cam = document.createElement("img");
               cam.className = "cam";
-              if (self.config.appendTimestampToCamUrl){
+              if ((curDSProtocol !== "mjpeg")&&(self.config.appendTimestampToCamUrl)){
                 cam.src = this.dsStreamInfo[curDsIdx][curCamName]+"&timestamp="+Math.floor(Date.now() / 1000);
               } else {
                 cam.src = this.dsStreamInfo[curDsIdx][curCamName];
@@ -402,7 +404,7 @@ Module.register("MMM-SynologySurveillance", {
               ) {
                 var cam = document.createElement("img");
                 cam.className = "cam";
-                if (self.config.appendTimestampToCamUrl){
+                if ((curDSProtocol !== "mjpeg")&&(self.config.appendTimestampToCamUrl)){
                   cam.src = this.dsStreamInfo[curDsIdx][curCamName]+"&timestamp="+Math.floor(Date.now() / 1000);
                 } else {
                   cam.src = this.dsStreamInfo[curDsIdx][curCamName];
@@ -646,7 +648,7 @@ Module.register("MMM-SynologySurveillance", {
   socketNotificationReceived: function (notification, payload) {
     if (notification === "DS_STREAM_INFO") {
       console.log("Got new Stream info of ds with id: " + payload.dsIdx);
-      // console.log(JSON.stringify(payload, null, 3))
+      console.log(JSON.stringify(payload, null, 3))
       if (
         typeof this.dsStreamInfo[payload.dsIdx] !== "undefined" &&
         this.config.onlyRefreshIfUrlChanges
