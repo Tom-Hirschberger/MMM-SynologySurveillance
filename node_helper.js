@@ -23,239 +23,293 @@ module.exports = NodeHelper.create({
     for (let curDsIdx = 0; curDsIdx < self.config.ds.length; curDsIdx++) {
       let curDs = self.config.ds[curDsIdx];
       let curDsResult = {};
-      let syno = new Syno({
-        protocol: curDs.protocol,
-        host: curDs.host,
-        port: curDs.port,
-        account: curDs.user,
-        passwd: curDs.password,
-        ignoreCertificateErrors: true,
-        apiVersion: self.config.apiVersion
-      });
-
-      syno.dsIdx = curDsIdx;
-
-      // console.log(self.name+": Created DS with id: "+curDsIdx+" and url: "+curDs.protocol+"://"+curDs.host+":"+curDs.port)
-      self.ds[curDsIdx] = {};
-      self.ds[curDsIdx].syno = syno;
-
-      let validCamNames = {};
-      for (let i = 0; i < curDs.cams.length; i++) {
-        validCamNames[curDs.cams[i].name] = i;
-      }
-
       console.log(
-        self.name + ": Updating information of DS with idx: " + curDsIdx
+        self.name + ": Updating information of DS with idx: " + curDsIdx + " and protocol "+curDs.protocol
       );
-      // console.log(self.name+": ValidCamNames of idx: "+curDsIdx+" :"+JSON.stringify(validCamNames))
-      syno.ss.listCameras(function (error, data) {
-        // console.log(self.name+": Listing Cams of: "+curDsIdx)
-        // console.log(self.name+": Error: "+JSON.stringify(error))
-        // console.log(self.name+": Data: "+JSON.stringify(data))
+      if ((typeof curDs.protocol !== "undefined") && (curDs.protocol === "mjpeg")){
+        console.log(
+          self.name + ": DS is of type mjpeg"
+        );
+        for (let i = 0; i < curDs.cams.length; i++) {
+          let curCam = curDs.cams[i]
+          console.log(
+            self.name + ": Updating information of cam "+i+" of DS with idx: " + curDsIdx
+          );
+          if (typeof curCam.name !== "undefined"){
+            console.log(
+              self.name + ": name is present"
+            );
+            let curProtocol = curCam.protocol || "http"
+            let curUser = curCam.username || null
+            let curPassword = curCam.password || null
+            let curHost = curCam.host || "localhost"
+            let curPort = curCam.port || null
+            let curStream = curCam.stream || null
 
-        let idNameMap = {};
-        let idString = "";
-        if (typeof data !== "undefined") {
-          let cameras = data["cameras"];
-          let notFirst = false;
-          for (let key in cameras) {
-            console.log(self.name + ": Found cam " + cameras[key]["newName"]);
-            idNameMap[cameras[key]["id"]] = cameras[key]["newName"];
-            if (typeof validCamNames[cameras[key]["newName"]] !== "undefined") {
-              if (notFirst) {
-                idString += ",";
-              }
-              idString += cameras[key]["id"];
-              notFirst = true;
+            let newUrl = curProtocol+"://"
+            if (curUser != null){
+              newUrl += curUser
             }
+
+            if (curPassword != null){
+              newUrl += ":"+curPassword+"@"
+            } else if (curUser != null){
+              newUrl += "@"
+            }
+
+            newUrl += curHost
+
+            if (curPort != null){
+              newUrl += ":"+curPort
+            }
+
+            if (curStream != null){
+              newUrl += "/"+curStream
+            }
+
+            console.log(
+              self.name + ": New url is: " + newUrl
+            );
+
+            curDsResult[curCam.name] = newUrl;
           }
+        }
 
-          self.ds[curDsIdx].idNameMap = idNameMap;
+        self.sendSocketNotification("DS_STREAM_INFO", {
+          dsIdx: curDsIdx,
+          camStreams: curDsResult
+        });
+      } else {
+        let syno = new Syno({
+          protocol: curDs.protocol,
+          host: curDs.host,
+          port: curDs.port,
+          account: curDs.user,
+          passwd: curDs.password,
+          ignoreCertificateErrors: true,
+          apiVersion: self.config.apiVersion
+        });
 
-          self.ds[curDsIdx].ptzPresetInfo = {};
-          if (self.config.showPositions || self.config.showBigPositions) {
-            for (let curCamId in idNameMap) {
-              self.ds[curDsIdx].ptzPresetInfo[curCamId] = [];
-              syno.ss.listPresetPtz(
-                { cameraId: curCamId },
-                function (ptzError, ptzData) {
-                  console.log(
-                    self.name +
-                      ": CurDS: " +
-                      curDsIdx +
-                      " curCamId: " +
-                      curCamId +
-                      ": " +
-                      JSON.stringify(ptzData, null, 2)
-                  );
+        syno.dsIdx = curDsIdx;
 
-                  if (
-                    typeof ptzError !== "undefined" &&
-                    ptzError !== null &&
-                    typeof ptzError["code"] !== "undefined" &&
-                    (ptzError["code"] === 105 || ptzError["code"] === 498) &&
-                    self.config.skipOnPrivilegeError
-                  ) {
+        // console.log(self.name+": Created DS with id: "+curDsIdx+" and url: "+curDs.protocol+"://"+curDs.host+":"+curDs.port)
+        self.ds[curDsIdx] = {};
+        self.ds[curDsIdx].syno = syno;
+
+        let validCamNames = {};
+        for (let i = 0; i < curDs.cams.length; i++) {
+          validCamNames[curDs.cams[i].name] = i;
+        }
+        // console.log(self.name+": ValidCamNames of idx: "+curDsIdx+" :"+JSON.stringify(validCamNames))
+        syno.ss.listCameras(function (error, data) {
+          // console.log(self.name+": Listing Cams of: "+curDsIdx)
+          // console.log(self.name+": Error: "+JSON.stringify(error))
+          // console.log(self.name+": Data: "+JSON.stringify(data))
+
+          let idNameMap = {};
+          let idString = "";
+          if (typeof data !== "undefined") {
+            let cameras = data["cameras"];
+            let notFirst = false;
+            for (let key in cameras) {
+              console.log(self.name + ": Found cam " + cameras[key]["newName"]);
+              idNameMap[cameras[key]["id"]] = cameras[key]["newName"];
+              if (typeof validCamNames[cameras[key]["newName"]] !== "undefined") {
+                if (notFirst) {
+                  idString += ",";
+                }
+                idString += cameras[key]["id"];
+                notFirst = true;
+              }
+            }
+
+            self.ds[curDsIdx].idNameMap = idNameMap;
+
+            self.ds[curDsIdx].ptzPresetInfo = {};
+            if (self.config.showPositions || self.config.showBigPositions) {
+              for (let curCamId in idNameMap) {
+                self.ds[curDsIdx].ptzPresetInfo[curCamId] = [];
+                syno.ss.listPresetPtz(
+                  { cameraId: curCamId },
+                  function (ptzError, ptzData) {
                     console.log(
                       self.name +
-                        ": Got privilege error but skipping is activated!"
+                        ": CurDS: " +
+                        curDsIdx +
+                        " curCamId: " +
+                        curCamId +
+                        ": " +
+                        JSON.stringify(ptzData, null, 2)
                     );
-                  } else {
+
                     if (
-                      typeof ptzData !== "undefined" &&
-                      typeof ptzData.presets !== "undefined"
+                      typeof ptzError !== "undefined" &&
+                      ptzError !== null &&
+                      typeof ptzError["code"] !== "undefined" &&
+                      (ptzError["code"] === 105 || ptzError["code"] === 498) &&
+                      self.config.skipOnPrivilegeError
                     ) {
-                      self.ds[curDsIdx].ptzPresetInfo[curCamId] =
-                        ptzData.presets;
-                      self.sendSocketNotification("DS_PTZ_PRESET_INFO", {
+                      console.log(
+                        self.name +
+                          ": Got privilege error but skipping is activated!"
+                      );
+                    } else {
+                      if (
+                        typeof ptzData !== "undefined" &&
+                        typeof ptzData.presets !== "undefined"
+                      ) {
+                        self.ds[curDsIdx].ptzPresetInfo[curCamId] =
+                          ptzData.presets;
+                        self.sendSocketNotification("DS_PTZ_PRESET_INFO", {
+                          dsIdx: curDsIdx,
+                          curCamId: curCamId,
+                          camName: idNameMap[curCamId],
+                          ptzData: ptzData.presets
+                        });
+                      }
+                    }
+                  }
+                );
+              }
+            }
+
+            if (idString !== "") {
+              syno.ss.getLiveViewPathCamera(
+                { idList: idString },
+                function (liveViewError, liveViewData) {
+                  // console.log(self.name+": curDsIdx: "+JSON.stringify(curDsIdx))
+                  // console.log(self.name+": isNeeded: "+JSON.stringify(idsNeeded))
+                  // console.log(self.name+": idNameMap: "+JSON.stringify(idNameMap))
+                  if (typeof liveViewData !== "undefined") {
+                    // console.log(self.name+": Got url info of DS with id: "+curDsIdx)
+                    for (let curResIdx in liveViewData) {
+                      let curCamId = liveViewData[curResIdx]["id"];
+                      let curCamName = idNameMap[curCamId];
+                      if (
+                        typeof self.config.ds[curDsIdx].replaceHostPart ===
+                          "undefined" ||
+                        !self.config.ds[curDsIdx].replaceHostPart
+                      ) {
+                        curDsResult[curCamName] = encodeURI(
+                          liveViewData[curResIdx]["mjpegHttpPath"]);
+                      } else {
+                        let curUrl = encodeURI(liveViewData[curResIdx]["mjpegHttpPath"]);
+                        //first : is protocal:
+                        let newUrl = curUrl.substring(curUrl.indexOf(":") + 1);
+                        //second: is port
+                        if (
+                          typeof self.config.ds[curDsIdx].replacePortPart !==
+                            "undefined" ||
+                          self.config.ds[curDsIdx].replacePortPart
+                        ) {
+                          newUrl = newUrl.substring(newUrl.indexOf(":")+1);
+                          newUrl = newUrl.substring(newUrl.indexOf("/"));
+                          newUrl =
+                          self.config.ds[curDsIdx].protocol +
+                          "://" +
+                          self.config.ds[curDsIdx].host +
+                          ":" + 
+                          self.config.ds[curDsIdx].port +
+                          newUrl;
+                        } else {
+                          newUrl =
+                          self.config.ds[curDsIdx].protocol +
+                          "://" +
+                          self.config.ds[curDsIdx].host +
+                          newUrl;
+                        }
+
+                        curDsResult[curCamName] = newUrl;
+                        
+                      }
+                    }
+                    let curPayload = {
+                      dsIdx: curDsIdx,
+                      camStreams: curDsResult
+                    };
+
+                    console.log(
+                      self.name + ": " + JSON.stringify(curPayload, null, 2)
+                    );
+
+                    self.urlUpdateInProgress = false;
+                    self.sendSocketNotification("DS_STREAM_INFO", curPayload);
+                  } else {
+                    console.log(
+                      self.name +
+                        ": Got an  error while trying to fetch the live view data"
+                    );
+                    console.log(
+                      self.name + ": " + JSON.stringify(liveViewError, null, 2)
+                    );
+                    if (
+                      typeof liveViewError["code"] !== "undefined" &&
+                      (liveViewError["code"] === 105 ||
+                        liveViewError["code"] === 498) &&
+                      self.config.skipOnPrivilegeError
+                    ) {
+                      console.log(
+                        self.name +
+                          ": Got privilege error but skipping is activated!"
+                      );
+                    } else {
+                      self.sendSocketNotification("DS_STREAM_INFO", {
                         dsIdx: curDsIdx,
-                        curCamId: curCamId,
-                        camName: idNameMap[curCamId],
-                        ptzData: ptzData.presets
+                        camStreams: {}
                       });
                     }
                   }
                 }
               );
+            } else {
+              console.log(
+                self.name +
+                  ": Could not find any valid cam for ds with idx: " +
+                  curDsIdx
+              );
+              self.sendSocketNotification("DS_STREAM_INFO", {
+                dsIdx: curDsIdx,
+                camStreams: {}
+              });
             }
-          }
-
-          if (idString !== "") {
-            syno.ss.getLiveViewPathCamera(
-              { idList: idString },
-              function (liveViewError, liveViewData) {
-                // console.log(self.name+": curDsIdx: "+JSON.stringify(curDsIdx))
-                // console.log(self.name+": isNeeded: "+JSON.stringify(idsNeeded))
-                // console.log(self.name+": idNameMap: "+JSON.stringify(idNameMap))
-                if (typeof liveViewData !== "undefined") {
-                  // console.log(self.name+": Got url info of DS with id: "+curDsIdx)
-                  for (let curResIdx in liveViewData) {
-                    let curCamId = liveViewData[curResIdx]["id"];
-                    let curCamName = idNameMap[curCamId];
-                    if (
-                      typeof self.config.ds[curDsIdx].replaceHostPart ===
-                        "undefined" ||
-                      !self.config.ds[curDsIdx].replaceHostPart
-                    ) {
-                      curDsResult[curCamName] = encodeURI(
-                        liveViewData[curResIdx]["mjpegHttpPath"]);
-                    } else {
-                      let curUrl = encodeURI(liveViewData[curResIdx]["mjpegHttpPath"]);
-                      //first : is protocal:
-                      let newUrl = curUrl.substring(curUrl.indexOf(":") + 1);
-                      //second: is port
-                      if (
-                        typeof self.config.ds[curDsIdx].replacePortPart !==
-                          "undefined" ||
-                        self.config.ds[curDsIdx].replacePortPart
-                      ) {
-                        newUrl = newUrl.substring(newUrl.indexOf(":")+1);
-                        newUrl = newUrl.substring(newUrl.indexOf("/"));
-                        newUrl =
-                        self.config.ds[curDsIdx].protocol +
-                        "://" +
-                        self.config.ds[curDsIdx].host +
-                        ":" + 
-                        self.config.ds[curDsIdx].port +
-                        newUrl;
-                      } else {
-                        newUrl =
-                        self.config.ds[curDsIdx].protocol +
-                        "://" +
-                        self.config.ds[curDsIdx].host +
-                        newUrl;
-                      }
-
-                      curDsResult[curCamName] = newUrl;
-                      
-                    }
-                  }
-                  let curPayload = {
-                    dsIdx: curDsIdx,
-                    camStreams: curDsResult
-                  };
-
-                  console.log(
-                    self.name + ": " + JSON.stringify(curPayload, null, 2)
-                  );
-
-                  self.urlUpdateInProgress = false;
-                  self.sendSocketNotification("DS_STREAM_INFO", curPayload);
-                } else {
-                  console.log(
-                    self.name +
-                      ": Got an  error while trying to fetch the live view data"
-                  );
-                  console.log(
-                    self.name + ": " + JSON.stringify(liveViewError, null, 2)
-                  );
-                  if (
-                    typeof liveViewError["code"] !== "undefined" &&
-                    (liveViewError["code"] === 105 ||
-                      liveViewError["code"] === 498) &&
-                    self.config.skipOnPrivilegeError
-                  ) {
-                    console.log(
-                      self.name +
-                        ": Got privilege error but skipping is activated!"
-                    );
-                  } else {
-                    self.sendSocketNotification("DS_STREAM_INFO", {
-                      dsIdx: curDsIdx,
-                      camStreams: {}
-                    });
-                  }
-                }
-              }
-            );
-          } else {
+          } else if (error) {
             console.log(
               self.name +
-                ": Could not find any valid cam for ds with idx: " +
+                ": Problem during fetch of cams of ds with idx: " +
                 curDsIdx
             );
-            self.sendSocketNotification("DS_STREAM_INFO", {
-              dsIdx: curDsIdx,
-              camStreams: {}
-            });
-          }
-        } else if (error) {
-          console.log(
-            self.name +
-              ": Problem during fetch of cams of ds with idx: " +
-              curDsIdx
-          );
-          console.log(self.name + ": " + JSON.stringify(error, null, 2));
-          if (typeof error["code"] !== "undefined") {
-            if (error["code"] === 105 || error["code"] === 498) {
-              if (self.config.skipOnPrivilegeError) {
-                console.log(
-                  self.name + ": Got privilege error but skipping is activated!"
-                );
+            console.log(self.name + ": " + JSON.stringify(error, null, 2));
+            if (typeof error["code"] !== "undefined") {
+              if (error["code"] === 105 || error["code"] === 498) {
+                if (self.config.skipOnPrivilegeError) {
+                  console.log(
+                    self.name + ": Got privilege error but skipping is activated!"
+                  );
+                } else {
+                  console.log(
+                    "Skipping is disabled. Sending empty list of streams!"
+                  );
+                  self.sendSocketNotification("DS_STREAM_INFO", {
+                    dsIdx: curDsIdx,
+                    camStreams: {}
+                  });
+                }
               } else {
-                console.log(
-                  "Skipping is disabled. Sending empty list of streams!"
-                );
+                console.log("Unknown error. Sending empty list of streams!");
                 self.sendSocketNotification("DS_STREAM_INFO", {
                   dsIdx: curDsIdx,
                   camStreams: {}
                 });
               }
             } else {
-              console.log("Unknown error. Sending empty list of streams!");
               self.sendSocketNotification("DS_STREAM_INFO", {
                 dsIdx: curDsIdx,
                 camStreams: {}
               });
             }
-          } else {
-            self.sendSocketNotification("DS_STREAM_INFO", {
-              dsIdx: curDsIdx,
-              camStreams: {}
-            });
           }
-        }
-      });
+        });
+      }//end synology part
     }
   },
 
