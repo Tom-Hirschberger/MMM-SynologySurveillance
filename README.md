@@ -144,6 +144,7 @@ Only if the protocol of the discstation is set to "mjpeg" a dummy disc station w
 | name     | The name this camera is listed in the diskstation  | true  |
 | alias    | An alias to use in the module for this camera | false |
 | profiles | An profile string to specify if this cam only should be displayed in specific profiles. If no profile string is provided the camera is visible in all profiles | false |
+| appendTimestampToCamUrl | If set the global option is ignored and the value of this option is used. If set to true the current timestamp will be added at the end of the url to avoid caching issues. | false |
 | url      | If the cam is part of a dummy discstation you need to specify the url of the mjpeg stream here! | true if part of dummy station |
 
 ## Supported Notifications
