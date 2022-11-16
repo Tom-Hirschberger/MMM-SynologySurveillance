@@ -156,7 +156,8 @@ Module.register("MMM-SynologySurveillance", {
         let curCamIdx = this.order[this.curBigIdx][1];
         let curCamAlias = this.order[this.curBigIdx][2];
         let curCamName = this.config.ds[curDsIdx].cams[curCamIdx].name;
-        let curDSProtocol = this.config.ds[curDsIdx].protocol;
+        let addTimestamp = this.config.ds[curDsIdx].cams[curCamIdx].appendTimestampToCamUrl || self.config.appendTimestampToCamUrl
+
         let camWrapper = document.createElement("div");
         camWrapper.className =
           "camWrapper big " + curDsIdx + "_" + curCamIdx + " " + curCamAlias;
@@ -175,7 +176,7 @@ Module.register("MMM-SynologySurveillance", {
         ) {
           var cam = document.createElement("img");
           cam.className = "cam";
-          if ((curDSProtocol !== "mjpeg")&&(self.config.appendTimestampToCamUrl)){
+          if (addTimestamp){
             cam.src = this.dsStreamInfo[curDsIdx][curCamName]+"&timestamp="+Math.floor(Date.now() / 1000);
           } else {
             cam.src = this.dsStreamInfo[curDsIdx][curCamName];
@@ -248,7 +249,7 @@ Module.register("MMM-SynologySurveillance", {
       let curCamIdx = this.order[curOrderIdx][1];
       let curCamAlias = this.order[curOrderIdx][2];
       let curCamName = this.config.ds[curDsIdx].cams[curCamIdx].name;
-      let curDSProtocol = this.config.ds[curDsIdx].protocol;
+      let addTimestamp = this.config.ds[curDsIdx].cams[curCamIdx].appendTimestampToCamUrl || self.config.appendTimestampToCamUrl
 
       if (
         typeof this.config.ds[curDsIdx].cams[curCamIdx].profiles ===
@@ -297,7 +298,7 @@ Module.register("MMM-SynologySurveillance", {
             ) {
               var cam = document.createElement("img");
               cam.className = "cam";
-              if ((curDSProtocol !== "mjpeg")&&(self.config.appendTimestampToCamUrl)){
+              if (addTimestamp){
                 cam.src = this.dsStreamInfo[curDsIdx][curCamName]+"&timestamp="+Math.floor(Date.now() / 1000);
               } else {
                 cam.src = this.dsStreamInfo[curDsIdx][curCamName];
@@ -404,7 +405,7 @@ Module.register("MMM-SynologySurveillance", {
               ) {
                 var cam = document.createElement("img");
                 cam.className = "cam";
-                if ((curDSProtocol !== "mjpeg")&&(self.config.appendTimestampToCamUrl)){
+                if (addTimestamp){
                   cam.src = this.dsStreamInfo[curDsIdx][curCamName]+"&timestamp="+Math.floor(Date.now() / 1000);
                 } else {
                   cam.src = this.dsStreamInfo[curDsIdx][curCamName];
