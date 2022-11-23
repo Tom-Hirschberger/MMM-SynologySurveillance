@@ -644,6 +644,8 @@ Module.register("MMM-SynologySurveillance", {
         this.curBigIdx = this.getNextCamId(this.curBigIdx, 0);
         this.updateDom(this.config.animationSpeed);
       }
+    } else if (notification === "SYNO_INVALIDATE_URL"){
+      this.sendSocketNotification(notification, payload)
     }
   },
 

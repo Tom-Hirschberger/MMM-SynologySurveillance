@@ -424,6 +424,9 @@ module.exports = NodeHelper.create({
           payload.position
       );
       self.goPosition(payload.dsIdx, payload.camName, payload.position);
+    } else if (notification === "SYNO_INVALIDATE_URL"){
+      self.iterationCnt = self.config.iterationCnt+10
+      self.getStreamUrls()
     }
   }
 });
