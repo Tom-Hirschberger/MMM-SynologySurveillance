@@ -18,7 +18,8 @@ Module.register("MMM-SynologySurveillance", {
     skipOnPrivilegeError: true,
     updateDomOnShow: true,
     appendTimestampToCamUrl: true,
-    apiVersion: '6.2.2'
+    apiVersion: '6.2.2',
+    provideDummyUrlAfterIterations: -1
   },
 
   /**
