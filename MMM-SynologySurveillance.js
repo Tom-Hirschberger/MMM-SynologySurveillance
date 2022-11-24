@@ -337,7 +337,7 @@ Module.register("MMM-SynologySurveillance", {
   resume: function () {
     const self = this
     if (self.config.updateDomOnShow){
-      self.updateDom()
+      self.updateDom(self.config.animationSpeed)
     }
   },
 
