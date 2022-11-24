@@ -34,7 +34,7 @@ module.exports = NodeHelper.create({
             let curCam = curDs.cams[i]
             console.log(self.name + ": Updating information of cam "+i+" of DS with idx: " + curDsIdx)
             if (typeof curCam.name !== "undefined"){
-              console.log(self.name + ": name is present")
+              // console.log(self.name + ": name is present")
               let curUrl = curCam.url || null
               
               if (curUrl != null){
@@ -100,10 +100,9 @@ module.exports = NodeHelper.create({
                   syno.ss.listPresetPtz(
                     { cameraId: curCamId },
                     function (ptzError, ptzData) {
-                      console.log(self.name +": CurDS: "+ curDsIdx +" curCamId: "+ curCamId +": " +
-                          JSON.stringify(ptzData, null, 2)
-                      )
-
+                      // console.log(self.name +": CurDS: "+ curDsIdx +" curCamId: "+ curCamId +": " +
+                      //     JSON.stringify(ptzData, null, 2)
+                      // )
                       if (
                         typeof ptzError !== "undefined" &&
                         ptzError !== null &&
