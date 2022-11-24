@@ -100,7 +100,7 @@ address: "192.168.178.10",
 | showBigCamName          | Should the name of the cam that is displayed in the big view added to the big view | Boolean | false |
 | showCamName             | Should the name of each cam be added the the small view | Boolean | false   |
 | showUnreachableCams     | Should cams we can not query the video url of being displayed | Boolean | true |
-| order                   | An string containing the names or alias (if you use the same cam name in different stations use the alias) of the cams in the order they should be displayed. If no order is provided the order of the diskstations and cams in the configuration is used.  | String  | null |
+| order                   | An array of strings containing the names or alias (if you use the same cam name in different stations use the alias) of the cams in the order they should be displayed. If no order is provided the order of the diskstations and cams in the configuration is used.  | Array of Strings  | null |
 | showPositions           | If set to true saved positions for this cam will be added as buttons; You can either click them or send an notification to change to this position | Boolean | true |
 | showBigPositions        | If set to true the saved positions of the current big cam will be displayed as buttons; You can either click them or change the positions by notification | Boolean | true |
 | urlRefreshInterval      | The module connects periodically to the discstations to get the current urls (and refreshes the authentication cookie). This option controls the interval (seconds) | Integer | 60 |
