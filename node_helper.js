@@ -8,17 +8,18 @@ const NodeHelper = require("node_helper");
 const Syno = require("syno");
 module.exports = NodeHelper.create({
   start: function () {
-    this.started = false;
-    this.urlUpdateInProgress = false;
-    this.ds = {};
-    this.iterationCnt = 0;
+    const self = this
+    self.started = false;
+    self.urlUpdateInProgress = false;
+    self.ds = {};
+    self.iterationCnt = 0;
   },
 
   getStreamUrls: function () {
-    this.urlUpdateInProgress = true;
-    const self = this;
+    const self = this
+    self.urlUpdateInProgress = true;
     let result = [];
-    this.iterationCnt += 1
+    self.iterationCnt += 1
     let dummySend = false
 
     // console.log(self.name+": Creating "+self.config.ds.length+" DiskStation(s)")
@@ -29,7 +30,7 @@ module.exports = NodeHelper.create({
       console.log(
         self.name + ": Updating information of DS with idx: " + curDsIdx + " and protocol "+curDs.protocol
       );
-      if ((this.config.provideDummyUrlAfterIterations < 1) || (this.iterationCnt < this.config.provideDummyUrlAfterIterations)){
+      if ((self.config.provideDummyUrlAfterIterations < 1) || (self.iterationCnt < self.config.provideDummyUrlAfterIterations)){
         if ((typeof curDs.protocol !== "undefined") && (curDs.protocol === "mjpeg")){
           console.log(
             self.name + ": DS is of type mjpeg"
@@ -307,9 +308,9 @@ module.exports = NodeHelper.create({
     }
 
     if (dummySend){
-      this.iterationCnt = 0;
+      self.iterationCnt = 0;
       setTimeout(() => {
-        this.getStreamUrls();
+        self.getStreamUrls();
       }, 1000);
     }
   },
