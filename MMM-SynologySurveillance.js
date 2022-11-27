@@ -296,7 +296,7 @@ Module.register("MMM-SynologySurveillance", {
 
     //now lets check all other cams
     for (let curOrderIdx = 0; curOrderIdx < self.order.length; curOrderIdx++) {
-      let curDsIdx = [0];
+      let curDsIdx = self.order[curOrderIdx][0];
       let curCamIdx = self.order[curOrderIdx][1];
       let curCamName = self.config.ds[curDsIdx].cams[curCamIdx].name;
 
