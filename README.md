@@ -9,7 +9,7 @@ Profiles are supported as well. Each cam can be configured with a profiles strin
 
 The urls of the cams will be refreshed preiodically.
 
-Attention: The "mpjeg" streams provide worse quality than the rtsp streams but displaying the rtsp streams is much more and needs some extra tools installed on the pi. If you search for an rtsp module try: https://github.com/shbatm/MMM-RTSPStream or try to convert the rtsp stream to a mjpeg stream. In my [vlc-rtsp2mjpeg-wrapper](https://github.com/Tom-Hirschberger/vlc-rtsp2mjpeg-wrapper) i provide a wrapper script which uses the vlc player to convert a rtsp stream to a mjpeg stream.
+Attention: The "mpjeg" streams provide worse quality than the rtsp streams but displaying the rtsp streams is much more and needs some extra tools installed on the pi. If you search for an rtsp module try: <https://github.com/shbatm/MMM-RTSPStream> or try to convert the rtsp stream to a mjpeg stream. In my [vlc-rtsp2mjpeg-wrapper](https://github.com/Tom-Hirschberger/vlc-rtsp2mjpeg-wrapper) i provide a wrapper script which uses the vlc player to convert a rtsp stream to a mjpeg stream.
 
 Because the module uses Flexbox Layout instead of Tables there is a lot of css styling possiblity.
 
@@ -27,22 +27,27 @@ Because the module uses Flexbox Layout instead of Tables there is a lot of css s
 
 ## Installation
 
-    cd ~/MagicMirror/modules
-    git clone https://github.com/Tom-Hirschberger/MMM-SynologySurveillance.git
-    cd MMM-SynologySurveillance
-    npm install
+```bash
+cd ~/MagicMirror/modules
+git clone https://github.com/Tom-Hirschberger/MMM-SynologySurveillance.git
+cd MMM-SynologySurveillance
+npm install
+```
 
 ## Configuration
 
 ### MagicMirror configuration
+
 In MagicMirror version 2.16 and above electron is used in a version that prevents Cross-Origin Resource Sharing (CORS). This causes this module to be unable to display the mjpeg stream in the default setup. With a small modification to the default config it will work again:
 
 The default MagicMirror contains a line:
+
 ```json5
 address: "localhost",
 ```
 
 which most users change to something like:
+
 ```json5
 address: "0.0.0.0",
 ```
@@ -51,43 +56,29 @@ to be the mirror be accassable via webbrowser.
 Both versions result in the violation of the CORS policy and the cam feed is not visible.
 
 If you change the address to the ip of your mirror it will work, i.e.
+
 ```json5
 address: "192.168.178.10",
 ```
 
 ### Module configuration
+
+The basic configuration of the module looks like:
+
 ```json5
-    	{
-			module: "MMM-SynologySurveillance",
-			position: "top_bar",
-			config: {
-				showOneBig: true,
-				addBigToNormal: false,
-				showCamName: false,
-				showBigCamName: false,
-				showUnreachableCams: true,
-				showPositions: true,
-				showBigPositions: true,
-				vertical: true,
-				ds: [
-					{
-						protocol: "https",
-						host: "mydiskstation",
-						port: "5000",
-						user: "dummy",
-						password: "dummy123",
-						replaceHostPart: true,
-						cams: [
-							{
-								alias: "Cam1",
-								name: "NAME_IN_DS",
-							}
-						]
-					},
-				],
-			},
-		},
+    {
+        module: "MMM-SynologySurveillance",
+        position: "top_bar",
+        config: {
+            vertical: true,
+            ds: [
+                //add your diskstations here
+            ],
+        },
+    },
 ```
+
+There is a example topic after the description of the different configuration parameters which provides some more or less complex configuration examples and the explains the details.
 
 ### General
 
@@ -100,7 +91,7 @@ address: "192.168.178.10",
 | showBigCamName          | Should the name of the cam that is displayed in the big view added to the big view | Boolean | false |
 | showCamName             | Should the name of each cam be added the the small view | Boolean | false   |
 | showUnreachableCams     | Should cams we can not query the video url of being displayed | Boolean | true |
-| order                   | An string containing the names or alias (if you use the same cam name in different stations use the alias) of the cams in the order they should be displayed. If no order is provided the order of the diskstations and cams in the configuration is used.  | String  | null |
+| order                   | An array of strings containing the names or alias (if you use the same cam name in different stations use the alias) of the cams in the order they should be displayed. If no order is provided the order of the diskstations and cams in the configuration is used.  | Array of Strings  | null |
 | showPositions           | If set to true saved positions for this cam will be added as buttons; You can either click them or send an notification to change to this position | Boolean | true |
 | showBigPositions        | If set to true the saved positions of the current big cam will be displayed as buttons; You can either click them or change the positions by notification | Boolean | true |
 | urlRefreshInterval      | The module connects periodically to the discstations to get the current urls (and refreshes the authentication cookie). This option controls the interval (seconds) | Integer | 60 |
@@ -120,7 +111,7 @@ As of version 0.1.0 of the module there are two types of discstations. Either on
 | -------------------- | -------- | ------- | --------- |
 | protocol             | The protocol to use. Either http, https. | String | http/false |
 | host                 | The hostname or ip address of the diskstation to connect to | String | Empty/true |
-| port                 | The port of the diskstation (not the survaillance redirect!)  | Integer | -1/true |
+| port                 | The port of the diskstation (not the survaillance redirect!). It is 5000 for http and 5001 for https usally.  | Integer | -1/true |
 | user                 | The username to login to the diskstation  | String  | Empty/true |
 | password             | The password used for the login | String | Empty/true |
 | cams                 | The array containing the information about the cams to query | Array | Empty/true |
@@ -144,7 +135,157 @@ Only if the protocol of the discstation is set to "mjpeg" a dummy disc station w
 | name     | The name this camera is listed in the diskstation  | true  |
 | alias    | An alias to use in the module for this camera | false |
 | profiles | An profile string to specify if this cam only should be displayed in specific profiles. If no profile string is provided the camera is visible in all profiles | false |
-| url      | If the cam is part of a dummy discstation you need to specify the url of the mjpeg stream here! | true if part of dummy station |
+| appendTimestampToCamUrl | If set the global option is ignored and the value of this option is used. If set to true the current timestamp will be added at the end of the url to avoid caching issues. | false |
+| url      | If the cam is part of a dummy diskstation you need to specify the url of the mjpeg stream here! | true if part of dummy station |
+
+### Configuration examples
+
+Let's look at different configurations with examples...
+
+The base configuration starts with one diskstation containing one cam.
+The diskstation is accessed in the browser with the url `http://mydiskstation:5000`. The `host` is "mydiskstation" and the `port` is "5000" in this case. Additionally we provide the `user` and `password`.
+
+As we want to use vertical layout we set `vertical` to `true`. As we only want to add one cam at this point this does not really make any difference.
+
+The cam we want to add has the name "NAME_IN_DS" in the diskstation but we want to module to use the alias "Cam1" for it. If the `showCamName` is set to `true` (which is not the default case) the alias is displayed instead of the name then. If you want to provide a `order` for your cameras the alias will be used instead of the name, too.
+
+```json5
+    {
+        module: "MMM-SynologySurveillance",
+        position: "top_bar",
+        config: {
+            vertical: true,
+            ds: [
+                {
+                    protocol: "http",
+                    host: "mydiskstation",
+                    port: "5000",
+                    user: "dummy",
+                    password: "dummy123",
+                    cams: [
+                        {
+                            alias: "Cam1",
+                            name: "NAME_IN_DS",
+                        }
+                    ]
+                },
+            ],
+        },
+    },
+```
+
+Now we expand the example of above with a second diskstation with `host` "myds2" with `protocol` "https" and two more cameras. As "https" is used we set the `port` to "5001". If you changed the port settings of your NAS you need the values as set in the NAS.
+
+```json5
+    {
+        module: "MMM-SynologySurveillance",
+        position: "top_bar",
+        config: {
+            vertical: true,
+            ds: [
+                {
+                    protocol: "http",
+                    host: "mydiskstation",
+                    port: "5000",
+                    user: "dummy",
+                    password: "dummy123",
+                    cams: [
+                        {
+                            alias: "Cam1",
+                            name: "NAME_IN_DS",
+                        }
+                    ]
+                },
+                {
+                    protocol: "https",
+                    host: "myds2",
+                    port: "5001",
+                    user: "dummy",
+                    password: "dummy123",
+                    cams: [
+                        {
+                            alias: "Cam 3",
+                            name: "NAME_IN_DS",
+                        },
+                        {
+                            name: "My Cam2",
+                        }
+                    ]
+                },
+            ],
+        },
+    },
+```
+
+We now diplay the camera "NAME_IN_DS" of the first diskstation and the cameras "NAME_IN_DS" and "My Cam2" of the second diskstation. As both "NAME_IN_DS" cameras do have a alias set we can change the order of the cameras with the setting:
+
+```json5
+order: ["My Cam2", "Cam 3", "Cam1"]
+```
+
+If we do want to add two more cameras now which are not connected to any diskstation but provide a mjpeg-stream instead we can add them as well:
+
+```json5
+    {
+        module: "MMM-SynologySurveillance",
+        position: "top_bar",
+        config: {
+            vertical: true,
+            ds: [
+                {
+                    protocol: "http",
+                    host: "mydiskstation",
+                    port: "5000",
+                    user: "dummy",
+                    password: "dummy123",
+                    cams: [
+                        {
+                            alias: "Cam1",
+                            name: "NAME_IN_DS",
+                        }
+                    ]
+                },
+                {
+                    protocol: "https",
+                    host: "myds2",
+                    port: "5001",
+                    user: "dummy",
+                    password: "dummy123",
+                    cams: [
+                        {
+                            alias: "Cam 3",
+                            name: "NAME_IN_DS",
+                        },
+                        {
+                            name: "My Cam2",
+                        }
+                    ]
+                },
+                {
+                    protocol: "mjpeg",
+                    cams: [
+                        {
+                            alias: "Cam4",
+                            url: "http://mycam4:8000"
+                        },
+                        {
+                            alias: "Cam5",
+                            url: "http://myuser:mypass@mycam5:8888/stream"
+                        }
+                    ]
+                },
+            ],
+        },
+    },
+```
+
+Make sure to add the new cams to the `order` option if you set a alternative order:
+
+```json5
+order: ["My Cam2", "Cam 3", "Cam1", "Cam4", "Cam5"]
+```
+
+The `url` of "Cam5" is more complex as the camera requires a username (myuser) and password (mypass) to be accessed.
 
 ## Supported Notifications
 
