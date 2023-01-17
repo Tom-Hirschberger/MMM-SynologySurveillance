@@ -15,6 +15,29 @@ module.exports = NodeHelper.create({
     self.iterationCnt = 0
   },
 
+  splitAndReplaceUrlParts: function(orgUrl, newProtocol=null, newHost=null, newPort=null){
+    urlObj = new URL(orgUrl)
+    let newUrl = newProtocol+"://"
+
+    if(newHost != null){
+      newUrl += newHost
+    } else {
+      newUrl += urlObj.hostname
+    }
+
+    newUrl += ":"
+    if (newPort != null){
+      newUrl += newPort
+    } else {
+      newUrl += urlObj.port
+    }
+
+    newUrl += urlObj.pathname
+    newUrl += urlObj.search
+
+    return newUrl
+  },
+
   getStreamUrls: function () {
     const self = this
     self.urlUpdateInProgress = true
@@ -146,26 +169,16 @@ module.exports = NodeHelper.create({
                         ){
                           curDsResult[curCamName] = encodeURI(liveViewData[curResIdx]["mjpegHttpPath"])
                         } else {
-                          let curUrl = encodeURI(liveViewData[curResIdx]["mjpegHttpPath"])
-                          //first : is protocal:
-                          let newUrl = curUrl.substring(curUrl.indexOf(":") + 1)
-                          //second: is port
+                          let curUrl = liveViewData[curResIdx]["mjpegHttpPath"]
+                          let newHost = self.config.ds[curDsIdx].host
+                          let newPort = null
                           if (typeof self.config.ds[curDsIdx].replacePortPart !== "undefined" ||
                               self.config.ds[curDsIdx].replacePortPart
                           ){
-                            newUrl = newUrl.substring(newUrl.indexOf(":")+1)
-                            newUrl = newUrl.substring(newUrl.indexOf("/"))
-                            newUrl = self.config.ds[curDsIdx].protocol +
-                                     "://" + self.config.ds[curDsIdx].host +
-                                     ":" + self.config.ds[curDsIdx].port +
-                                     newUrl
-                          } else {
-                            newUrl = self.config.ds[curDsIdx].protocol +
-                                     "://" + self.config.ds[curDsIdx].host +
-                                     newUrl;
+                            newPort = self.config.ds[curDsIdx].port
                           }
 
-                          curDsResult[curCamName] = newUrl
+                          curDsResult[curCamName] = self.splitAndReplaceUrlParts(curUrl, self.config.ds[curDsIdx].protocol, newHost, newPort)
                         }
                       }
                       let curPayload = {
