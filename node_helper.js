@@ -280,7 +280,7 @@ module.exports = NodeHelper.create({
     let curDsIdx = dsIdx
     let curCamName = camName
     while (self.urlUpdateInProgress) {
-      Sleep(1000);
+      self.Sleep(1000);
     }
 
     if (typeof self.ds[dsIdx] !== "undefined" &&
