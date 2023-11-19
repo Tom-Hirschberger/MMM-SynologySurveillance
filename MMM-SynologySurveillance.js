@@ -19,7 +19,8 @@ Module.register("MMM-SynologySurveillance", {
     updateDomOnShow: true,
     appendTimestampToCamUrl: true,
     apiVersion: '6.2.2',
-    provideDummyUrlAfterIterations: -1
+    provideDummyUrlAfterIterations: -1,
+	imgDecodeCheckInterval: -1,
   },
 
   /**
@@ -38,6 +39,8 @@ Module.register("MMM-SynologySurveillance", {
     const self = this
     Log.info("Starting module: " + self.name);
 
+	self.imgs = []
+	self.imgsTimeouts = []
     self.dsStreamInfo = []
     self.dsPresetInfo = {}
     self.dsPresetCurPosition = {}
@@ -64,7 +67,7 @@ Module.register("MMM-SynologySurveillance", {
             } else {
               curCamName = self.config.ds[curDsIdx].cams[curCamIdx].name
             }
-            
+
             nameDsCamIdxMap[curCamName] = [
               curDsIdx,
               curCamIdx,
@@ -86,7 +89,7 @@ Module.register("MMM-SynologySurveillance", {
             curOrderName,
             nameDsCamIdxMap[curOrderName][2]
           ]
-          
+
           self.order.push(curRes)
         }
       }
@@ -133,6 +136,24 @@ Module.register("MMM-SynologySurveillance", {
     }, self.config.urlRefreshInterval * 1000)
   },
 
+  checkImgSrc: async function (imgIdx, interval) {
+	const self = this
+	let imgElement = self.imgs[imgIdx]
+	try {
+		await imgElement.decode();
+	} catch {
+		console.log("Image with idx: "+imgIdx+" has an undecodeable URL. Refreshing it!")
+		let src = imgElement.src;
+		imgElement.src = "";
+		imgElement.src = src;
+		self.sendSocketNotification("REFRESH_URLS")
+	}
+
+	self.imgsTimeouts[imgIdx] = setTimeout(() => {
+		self.checkImgSrc(imgIdx, interval)
+	}, interval)
+  },
+
   getCamElement: function(orderIdx, additionalClasses, showCamName, showPositions, addCamEventListener, iconClasses) {
     const self = this
     let camConfig = self.order[orderIdx]
@@ -152,7 +173,7 @@ Module.register("MMM-SynologySurveillance", {
     camWrapper.classList.add(curDsIdx + "_" + curCamIdx)
     camWrapper.classList.add(curCamAlias)
     additionalClasses.forEach(element => camWrapper.classList.add(element))
-    
+
     if (showCamName) {
       let camNameWrapper = document.createElement("div")
       camNameWrapper.className = "name"
@@ -184,6 +205,7 @@ Module.register("MMM-SynologySurveillance", {
       } else {
         cam.src = self.dsStreamInfo[curDsIdx][curCamName]
       }
+	  self.imgs.push(cam)
     } else {
       cam = document.createElement("i")
       cam.className = "cam nourl"
@@ -207,7 +229,7 @@ Module.register("MMM-SynologySurveillance", {
       let innerPositionWrapper = document.createElement("div")
       innerPositionWrapper.className = "innerPositionWrapper"
       additionalClasses.forEach(element => innerPositionWrapper.classList.add(element))
-      
+
       if (typeof self.dsPresetInfo[curDsIdx] !== "undefined" &&
           typeof self.dsPresetInfo[curDsIdx][curCamName] !== "undefined"
       ){
@@ -245,7 +267,7 @@ Module.register("MMM-SynologySurveillance", {
     let curDsIdx = camConfig[0]
     let curCamIdx = camConfig[1]
     let curCamAlias = camConfig[2]
-    
+
     let camWrapper = document.createElement("div")
     camWrapper.className = "camWrapper"
     camWrapper.classList.add(curDsIdx +"_"+ curCamIdx)
@@ -276,7 +298,7 @@ Module.register("MMM-SynologySurveillance", {
       additionalClasses.forEach(element => innerPositionWrapper.classList.add(element))
       camWrapper.appendChild(innerPositionWrapper)
     }
-    
+
     return camWrapper
   },
 
@@ -285,10 +307,17 @@ Module.register("MMM-SynologySurveillance", {
     const wrapper = document.createElement("div")
     wrapper.className = "synology-surveillance"
 
+	for (let imgIdx = 0; imgIdx < self.imgsTimeouts.length; imgIdx++){
+		clearTimeout(self.imgsTimeouts[imgIdx])
+	}
+
+	self.imgsTimeouts = []
+	self.imgs = []
+
     //if we are in vertical layout and one cam should be displayed as big one we need to add the big one
     //as first cam
     if (self.config.vertical && self.config.showOneBig) {
-      if (typeof self.order[self.curBigIdx] !== "undefined") {   
+      if (typeof self.order[self.curBigIdx] !== "undefined") {
         let camWrapper = self.getCamElement(self.curBigIdx, ["big"], self.config.showBigCamName, self.config.showBigPositions, false, ["fa", self.config.noUrlIcon])
         wrapper.appendChild(camWrapper)
       }
@@ -330,6 +359,12 @@ Module.register("MMM-SynologySurveillance", {
         }
       }
     }
+
+	for (let imgIdx = 0; imgIdx < self.imgs.length; imgIdx++){
+		if (self.config.imgDecodeCheckInterval > 0) {
+			self.checkImgSrc(imgIdx,self.config.imgDecodeCheckInterval * 1000)
+		}
+	}
 
     return wrapper
   },
