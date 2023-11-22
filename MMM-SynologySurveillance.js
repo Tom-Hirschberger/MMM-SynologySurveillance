@@ -20,7 +20,7 @@ Module.register("MMM-SynologySurveillance", {
     appendTimestampToCamUrl: true,
     apiVersion: '6.2.2',
     provideDummyUrlAfterIterations: -1,
-	imgDecodeCheckInterval: -1,
+	  imgDecodeCheckInterval: -1,
   },
 
   /**
@@ -136,22 +136,22 @@ Module.register("MMM-SynologySurveillance", {
     }, self.config.urlRefreshInterval * 1000)
   },
 
-  checkImgSrc: async function (imgIdx, interval) {
-	const self = this
-	let imgElement = self.imgs[imgIdx]
-	try {
-		await imgElement.decode();
-	} catch {
-		console.log("Image with idx: "+imgIdx+" has an undecodeable URL. Refreshing it!")
-		let src = imgElement.src;
-		imgElement.src = "";
-		imgElement.src = src;
-		self.sendSocketNotification("REFRESH_URLS")
-	}
+  checkImgSrc: async function (imgIdx) {
+    const self = this
+    let imgElement = self.imgs[imgIdx][0]
+    try {
+      await imgElement.decode();
+    } catch {
+      console.log("Image with idx: "+imgIdx+" has an undecodeable URL. Refreshing it!")
+      let src = imgElement.src;
+      imgElement.src = "";
+      imgElement.src = src;
+      self.sendSocketNotification("REFRESH_URLS")
+    }
 
-	self.imgsTimeouts[imgIdx] = setTimeout(() => {
-		self.checkImgSrc(imgIdx, interval)
-	}, interval)
+    self.imgsTimeouts[imgIdx] = setTimeout(() => {
+      self.checkImgSrc(imgIdx)
+    }, self.imgs[imgIdx][1])
   },
 
   getCamElement: function(orderIdx, additionalClasses, showCamName, showPositions, addCamEventListener, iconClasses) {
@@ -167,6 +167,13 @@ Module.register("MMM-SynologySurveillance", {
     if (typeof curCamGlobalConfig.appendTimestampToCamUrl !== "undefined"){
       addTimestamp = curCamGlobalConfig.appendTimestampToCamUrl
     }
+
+    let imgDecodeCheckInterval = self.config.imgDecodeCheckInterval
+    if (typeof curCamGlobalConfig.imgDecodeCheckInterval !== "undefined"){
+      imgDecodeCheckInterval = curCamGlobalConfig.imgDecodeCheckInterval
+    }
+
+    imgDecodeCheckInterval = imgDecodeCheckInterval * 1000
 
     let camWrapper = document.createElement("div")
     camWrapper.className = "camWrapper"
@@ -205,7 +212,9 @@ Module.register("MMM-SynologySurveillance", {
       } else {
         cam.src = self.dsStreamInfo[curDsIdx][curCamName]
       }
-	  self.imgs.push(cam)
+      if (imgDecodeCheckInterval > 0){
+        self.imgs.push([cam,imgDecodeCheckInterval])
+      }
     } else {
       cam = document.createElement("i")
       cam.className = "cam nourl"
@@ -361,9 +370,7 @@ Module.register("MMM-SynologySurveillance", {
     }
 
 	for (let imgIdx = 0; imgIdx < self.imgs.length; imgIdx++){
-		if (self.config.imgDecodeCheckInterval > 0) {
-			self.checkImgSrc(imgIdx,self.config.imgDecodeCheckInterval * 1000)
-		}
+    self.checkImgSrc(imgIdx)
 	}
 
     return wrapper

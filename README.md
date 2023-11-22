@@ -100,6 +100,7 @@ There is a example topic after the description of the different configuration pa
 | skipOnPrivilegeError    | Sometimes the disk stations report a privilege error although the user does have valid rights to access the surveillance station. If activated the old urls of this station are kept valid and the module will try to get new urls during the next refresh. | Boolean | true |
 | updateDomOnShow | Controls if the dom objects should be recreated if the modules gets shown after hidden status. This is to avoid caching issues (especially with electron versions used in MagicMirror 2.18 and above) | Boolean | true |
 | appendTimestampToCamUrl | Controls if the creation timestamp will be added to the cam url. This is to avoid caching issues (especially with electron versions used in MagicMirror 2.18 and above) | Boolean | true |
+| imgDecodeCheckInterval | If set to a value greater 0 the module will check if the images can decoded in a interval of this value in seconds. If a image can not be decoded the URL will be refreshed. This is to avoid empty cam boxes. The value can be set for each cam indiviually, too. If both this and value for the camera is set the one of the camera is used. | Integer | -1 |
 
 ### DiskStations
 
@@ -136,6 +137,7 @@ Only if the protocol of the discstation is set to "mjpeg" a dummy disc station w
 | alias    | An alias to use in the module for this camera | false |
 | profiles | An profile string to specify if this cam only should be displayed in specific profiles. If no profile string is provided the camera is visible in all profiles | false |
 | appendTimestampToCamUrl | If set the global option is ignored and the value of this option is used. If set to true the current timestamp will be added at the end of the url to avoid caching issues. | false |
+| imgDecodeCheckInterval | If set to a value greater 0 the module will check if the img of this cam can decoded in a interval of this value in seconds. If the image can not be decoded the URLs of all cams will be refreshed. This is to avoid empty cam boxes. The value can be set for each cam indiviually or in the global config section. If both this and the global value are set this value is used. | Integer | unset |
 | url      | If the cam is part of a dummy diskstation you need to specify the url of the mjpeg stream here! | true if part of dummy station |
 
 ### Configuration examples
