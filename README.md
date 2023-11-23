@@ -101,6 +101,8 @@ There is a example topic after the description of the different configuration pa
 | updateDomOnShow | Controls if the dom objects should be recreated if the modules gets shown after hidden status. This is to avoid caching issues (especially with electron versions used in MagicMirror 2.18 and above) | Boolean | true |
 | appendTimestampToCamUrl | Controls if the creation timestamp will be added to the cam url. This is to avoid caching issues (especially with electron versions used in MagicMirror 2.18 and above) | Boolean | true |
 | imgDecodeCheckInterval | If set to a value greater 0 the module will check if the images can decoded in a interval of this value in seconds. If a image can not be decoded the URL will be refreshed. This is to avoid empty cam boxes. The value can be set for each cam indiviually, too. If both this and value for the camera is set the one of the camera is used. | Integer | -1 |
+| minimumTimeBetweenRefreshs | It may happen that there are a lot of requests to refresh the URLs of the cams in a short time. This value prevents the requests to fire to quickly. The module waits at least this amount of milliseconds till it requests new URLs of the discstations again. | Integer | 10000 |
+| restoreBigAfterProfileChange | If multiple profiles are used and not all cams are visiable in all profiles it may happen that the cam that is displayed big changes on a profile change. If this setting is set to true the module tries to restore the previous state if the user returns to a previously selected profile. | Boolean | true |
 
 ### DiskStations
 

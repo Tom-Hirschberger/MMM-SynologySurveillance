@@ -9,6 +9,7 @@ const Syno = require("syno");
 module.exports = NodeHelper.create({
   start: function () {
     const self = this
+    self.lastRefresh = -1
     self.started = false
     self.urlUpdateInProgress = false
     self.ds = {}
@@ -334,10 +335,14 @@ module.exports = NodeHelper.create({
       self.config = payload
       self.started = true
     } else if (notification === "INIT_DS") {
+      self.lastRefresh = Date.now()
       self.getStreamUrls()
     } else if (notification === "REFRESH_URLS" && self.started) {
-      console.log(self.name + ": Refreshing the urls!")
-      self.getStreamUrls()
+      if ((Date.now() - self.lastRefresh) > self.config.minimumTimeBetweenRefreshs){
+        console.log(self.name + ": Refreshing the urls!")
+        self.lastRefresh = Date.now()
+        self.getStreamUrls()
+      }
     } else if (notification === "SYNO_SS_CHANGE_CAM") {
       self.sendSocketNotification(notification, payload)
     } else if (notification === "DS_CHANGE_POSITION") {

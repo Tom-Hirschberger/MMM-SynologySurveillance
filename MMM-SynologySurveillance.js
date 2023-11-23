@@ -21,7 +21,19 @@ Module.register("MMM-SynologySurveillance", {
     apiVersion: '6.2.2',
     provideDummyUrlAfterIterations: -1,
 	  imgDecodeCheckInterval: -1,
+    minimumTimeBetweenRefreshs: 10000,
+    restoreBigAfterProfileChange: true,
   },
+
+  suspend: function () {
+		const self = this
+		self.visible = false
+	},
+
+	resume: function () {
+		const self = this
+		self.visible = true
+	},
 
   /**
    * Apply any styles, if we have any.
@@ -39,8 +51,8 @@ Module.register("MMM-SynologySurveillance", {
     const self = this
     Log.info("Starting module: " + self.name);
 
-	self.imgs = []
-	self.imgsTimeouts = []
+    self.imgs = []
+    self.imgsTimeouts = []
     self.dsStreamInfo = []
     self.dsPresetInfo = {}
     self.dsPresetCurPosition = {}
@@ -48,6 +60,7 @@ Module.register("MMM-SynologySurveillance", {
     self.curBigIdx = 0
     self.currentProfile = ""
     self.currentProfilePattern = new RegExp(".*")
+    self.bigIdxPerProfile = {}
 
     if (self.config.order !== null) {
       let nameDsCamIdxMap = {}
@@ -527,7 +540,21 @@ Module.register("MMM-SynologySurveillance", {
       if (typeof payload.to !== "undefined"){
         self.currentProfile = payload.to
         self.currentProfilePattern = new RegExp("\\b" + payload.to + "\\b")
-        self.curBigIdx = self.getNextCamId(self.curBigIdx, 0)
+
+        if (typeof payload.from !== "undefined"){
+          if (self.config.restoreBigAfterProfileChange){
+            self.bigIdxPerProfile[payload.from] = self.curBigIdx
+          }
+
+          if(typeof self.bigIdxPerProfile[self.currentProfile] !== "undefined"){
+            self.curBigIdx = self.bigIdxPerProfile[self.currentProfile]
+          } else {
+            self.curBigIdx = self.getNextCamId(self.curBigIdx, 0)
+          }
+        } else {
+          self.curBigIdx = self.getNextCamId(self.curBigIdx, 0)
+        }
+        
         self.updateDom(self.config.animationSpeed)
       }
     } else if (notification === "SYNO_INVALIDATE_URL"){
