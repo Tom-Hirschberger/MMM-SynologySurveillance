@@ -1,3 +1,9 @@
+/* MagicMirror²
+ * Module: MMM-SynologySurveillance
+ *
+ * By Tom Hirschberger
+ * MIT Licensed.
+ */
 Module.register("MMM-SynologySurveillance", {
   defaults: {
     ds: [],
