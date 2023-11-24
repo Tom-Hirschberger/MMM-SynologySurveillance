@@ -1,7 +1,7 @@
 {
   "name": "MMM-SynologySurveillance",
-  "version": "0.1.3",
-  "description": "",
+  "version": "0.1.4",
+  "description": "A MaigcMirror² module which displays video streams of cameras either connected to a Synology Diskstation or which provide a mjpeg stream.",
   "main": "MMM-SynologySurveillance.js",
   "dependencies": {
     "syno": "latest"
@@ -10,6 +10,16 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "keywords": [
+    "MagicMirror",
+    "MM",
+    "Synology",
+    "SurveillanceStation",
+    "mjpeg",
+    "PTZ",
+    "live-stream",
+    "video"
+  ],
   "repository": {
     "type": "git",
     "url": "git@github.com:Tom-Hirschberger/MMM-SynologySurveillance.git"

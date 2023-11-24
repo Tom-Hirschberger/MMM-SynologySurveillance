@@ -1,3 +1,9 @@
+/* MagicMirror²
+ * Module: MMM-SynologySurveillance
+ *
+ * By Tom Hirschberger
+ * MIT Licensed.
+ */
 Module.register("MMM-SynologySurveillance", {
   defaults: {
     ds: [],
@@ -19,8 +25,21 @@ Module.register("MMM-SynologySurveillance", {
     updateDomOnShow: true,
     appendTimestampToCamUrl: true,
     apiVersion: '6.2.2',
-    provideDummyUrlAfterIterations: -1
+    provideDummyUrlAfterIterations: -1,
+	  imgDecodeCheckInterval: -1,
+    minimumTimeBetweenRefreshs: 10000,
+    restoreBigAfterProfileChange: true,
   },
+
+  suspend: function () {
+		const self = this
+		self.visible = false
+	},
+
+	resume: function () {
+		const self = this
+		self.visible = true
+	},
 
   /**
    * Apply any styles, if we have any.
@@ -38,6 +57,8 @@ Module.register("MMM-SynologySurveillance", {
     const self = this
     Log.info("Starting module: " + self.name);
 
+    self.imgs = []
+    self.imgsTimeouts = []
     self.dsStreamInfo = []
     self.dsPresetInfo = {}
     self.dsPresetCurPosition = {}
@@ -45,6 +66,7 @@ Module.register("MMM-SynologySurveillance", {
     self.curBigIdx = 0
     self.currentProfile = ""
     self.currentProfilePattern = new RegExp(".*")
+    self.bigIdxPerProfile = {}
 
     if (self.config.order !== null) {
       let nameDsCamIdxMap = {}
@@ -64,7 +86,7 @@ Module.register("MMM-SynologySurveillance", {
             } else {
               curCamName = self.config.ds[curDsIdx].cams[curCamIdx].name
             }
-            
+
             nameDsCamIdxMap[curCamName] = [
               curDsIdx,
               curCamIdx,
@@ -86,7 +108,7 @@ Module.register("MMM-SynologySurveillance", {
             curOrderName,
             nameDsCamIdxMap[curOrderName][2]
           ]
-          
+
           self.order.push(curRes)
         }
       }
@@ -133,6 +155,24 @@ Module.register("MMM-SynologySurveillance", {
     }, self.config.urlRefreshInterval * 1000)
   },
 
+  checkImgSrc: async function (imgIdx) {
+    const self = this
+    let imgElement = self.imgs[imgIdx][0]
+    try {
+      await imgElement.decode();
+    } catch {
+      console.log("Image with idx: "+imgIdx+" has an undecodeable URL. Refreshing it!")
+      let src = imgElement.src;
+      imgElement.src = "";
+      imgElement.src = src;
+      self.sendSocketNotification("REFRESH_URLS")
+    }
+
+    self.imgsTimeouts[imgIdx] = setTimeout(() => {
+      self.checkImgSrc(imgIdx)
+    }, self.imgs[imgIdx][1])
+  },
+
   getCamElement: function(orderIdx, additionalClasses, showCamName, showPositions, addCamEventListener, iconClasses) {
     const self = this
     let camConfig = self.order[orderIdx]
@@ -147,12 +187,19 @@ Module.register("MMM-SynologySurveillance", {
       addTimestamp = curCamGlobalConfig.appendTimestampToCamUrl
     }
 
+    let imgDecodeCheckInterval = self.config.imgDecodeCheckInterval
+    if (typeof curCamGlobalConfig.imgDecodeCheckInterval !== "undefined"){
+      imgDecodeCheckInterval = curCamGlobalConfig.imgDecodeCheckInterval
+    }
+
+    imgDecodeCheckInterval = imgDecodeCheckInterval * 1000
+
     let camWrapper = document.createElement("div")
     camWrapper.className = "camWrapper"
     camWrapper.classList.add(curDsIdx + "_" + curCamIdx)
     camWrapper.classList.add(curCamAlias)
     additionalClasses.forEach(element => camWrapper.classList.add(element))
-    
+
     if (showCamName) {
       let camNameWrapper = document.createElement("div")
       camNameWrapper.className = "name"
@@ -184,6 +231,9 @@ Module.register("MMM-SynologySurveillance", {
       } else {
         cam.src = self.dsStreamInfo[curDsIdx][curCamName]
       }
+      if (imgDecodeCheckInterval > 0){
+        self.imgs.push([cam,imgDecodeCheckInterval])
+      }
     } else {
       cam = document.createElement("i")
       cam.className = "cam nourl"
@@ -207,7 +257,7 @@ Module.register("MMM-SynologySurveillance", {
       let innerPositionWrapper = document.createElement("div")
       innerPositionWrapper.className = "innerPositionWrapper"
       additionalClasses.forEach(element => innerPositionWrapper.classList.add(element))
-      
+
       if (typeof self.dsPresetInfo[curDsIdx] !== "undefined" &&
           typeof self.dsPresetInfo[curDsIdx][curCamName] !== "undefined"
       ){
@@ -245,7 +295,7 @@ Module.register("MMM-SynologySurveillance", {
     let curDsIdx = camConfig[0]
     let curCamIdx = camConfig[1]
     let curCamAlias = camConfig[2]
-    
+
     let camWrapper = document.createElement("div")
     camWrapper.className = "camWrapper"
     camWrapper.classList.add(curDsIdx +"_"+ curCamIdx)
@@ -276,7 +326,7 @@ Module.register("MMM-SynologySurveillance", {
       additionalClasses.forEach(element => innerPositionWrapper.classList.add(element))
       camWrapper.appendChild(innerPositionWrapper)
     }
-    
+
     return camWrapper
   },
 
@@ -285,10 +335,17 @@ Module.register("MMM-SynologySurveillance", {
     const wrapper = document.createElement("div")
     wrapper.className = "synology-surveillance"
 
+	for (let imgIdx = 0; imgIdx < self.imgsTimeouts.length; imgIdx++){
+		clearTimeout(self.imgsTimeouts[imgIdx])
+	}
+
+	self.imgsTimeouts = []
+	self.imgs = []
+
     //if we are in vertical layout and one cam should be displayed as big one we need to add the big one
     //as first cam
     if (self.config.vertical && self.config.showOneBig) {
-      if (typeof self.order[self.curBigIdx] !== "undefined") {   
+      if (typeof self.order[self.curBigIdx] !== "undefined") {
         let camWrapper = self.getCamElement(self.curBigIdx, ["big"], self.config.showBigCamName, self.config.showBigPositions, false, ["fa", self.config.noUrlIcon])
         wrapper.appendChild(camWrapper)
       }
@@ -330,6 +387,10 @@ Module.register("MMM-SynologySurveillance", {
         }
       }
     }
+
+	for (let imgIdx = 0; imgIdx < self.imgs.length; imgIdx++){
+    self.checkImgSrc(imgIdx)
+	}
 
     return wrapper
   },
@@ -485,7 +546,21 @@ Module.register("MMM-SynologySurveillance", {
       if (typeof payload.to !== "undefined"){
         self.currentProfile = payload.to
         self.currentProfilePattern = new RegExp("\\b" + payload.to + "\\b")
-        self.curBigIdx = self.getNextCamId(self.curBigIdx, 0)
+
+        if (typeof payload.from !== "undefined"){
+          if (self.config.restoreBigAfterProfileChange){
+            self.bigIdxPerProfile[payload.from] = self.curBigIdx
+          }
+
+          if(typeof self.bigIdxPerProfile[self.currentProfile] !== "undefined"){
+            self.curBigIdx = self.bigIdxPerProfile[self.currentProfile]
+          } else {
+            self.curBigIdx = self.getNextCamId(self.curBigIdx, 0)
+          }
+        } else {
+          self.curBigIdx = self.getNextCamId(self.curBigIdx, 0)
+        }
+        
         self.updateDom(self.config.animationSpeed)
       }
     } else if (notification === "SYNO_INVALIDATE_URL"){
