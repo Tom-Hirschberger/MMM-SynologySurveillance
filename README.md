@@ -1,5 +1,7 @@
 # MMM-SynologySurveillance
 
+**[!CAUTION] This module does not support Surveillance Station in versions greater or equal 9.2 at the moment. The underlying library does not support the new api version introduced with version 9.2. I am working on a solution but it might take a while!**
+
 This module queries the "mjpeg" streams of surveillance cams connected to Synology disk stations and displays one or more cams in columns.
 One selected cam can be displayed in a big single view.
 The cam in the big view can either be switched by notification or by click/touch.
