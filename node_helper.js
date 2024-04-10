@@ -4,272 +4,107 @@
  * By Tom Hirschberger
  * MIT Licensed.
  */
-const NodeHelper = require("node_helper");
-const Syno = require("syno");
+const NodeHelper = require("node_helper")
+const SynologySurveillanceStationClient = require("./SynologySurveillanceStationClient")
+const MjpegDiskStation = require("./MjpegDiskStation")
+
 module.exports = NodeHelper.create({
   start: function () {
     const self = this
     self.lastRefresh = -1
     self.started = false
     self.urlUpdateInProgress = false
-    self.ds = {}
+    self.ds = []
     self.iterationCnt = 0
+    self.mjpegDs = {}
   },
 
-  splitAndReplaceUrlParts: function(orgUrl, newProtocol=null, newHost=null, newPort=null){
-    urlObj = new URL(orgUrl)
-    let newUrl = newProtocol+"://"
+  replaceUrlParts: function(url, newProtocol=null, newHost=null, newPort=null){
+    let newUrl = new URL(url)
+    if(newProtocol != null){
+      url.protocol = newProtocol
+    }
 
     if(newHost != null){
-      newUrl += newHost
-    } else {
-      newUrl += urlObj.hostname
+      url.hostname = newHost
     }
 
-    newUrl += ":"
-    if (newPort != null){
-      newUrl += newPort
-    } else {
-      newUrl += urlObj.port
+    if(newPort != null){
+      url.port = newPort
     }
 
-    newUrl += urlObj.pathname
-    newUrl += urlObj.search
-
-    return newUrl
+    return encodeURI(newUrl.toString())
   },
 
-  getStreamUrls: function () {
+  getInfoOfAllDs: async function(){
     const self = this
-    self.urlUpdateInProgress = true
-    self.iterationCnt += 1
-    let dummySend = false
+    console.log(self.name + "Trying to get infos of all "+self.ds.length+" DiskStations!")
 
-    // console.log(self.name+": Creating "+self.config.ds.length+" DiskStation(s)")
+    for(let dsIdx = 0; dsIdx < self.ds.length; dsIdx++){
+      if (self.config.debug){
+        console.log(self.name + "Trying to get infos of ds with idx: "+dsIdx)
+      }
+      self.ds[dsIdx].infos = {
+        camIds: [],
+        camNameIdMapping: {},
+        camIdNameMapping: {},
+        infosPerId: {}
+      }
 
-    for (let curDsIdx = 0; curDsIdx < self.config.ds.length; curDsIdx++) {
-      let curDs = self.config.ds[curDsIdx]
-      let curDsResult = {}
-      console.log(self.name + ": Updating information of DS with idx: " + curDsIdx + " and protocol "+curDs.protocol);
-      if ((self.config.provideDummyUrlAfterIterations < 1) || (self.iterationCnt < self.config.provideDummyUrlAfterIterations)){
-        if ((typeof curDs.protocol !== "undefined") && (curDs.protocol === "mjpeg")){
-          console.log(self.name + ": DS is of type mjpeg");
-          for (let i = 0; i < curDs.cams.length; i++) {
-            let curCam = curDs.cams[i]
-            console.log(self.name + ": Updating information of cam "+i+" of DS with idx: " + curDsIdx)
-            if (typeof curCam.name !== "undefined"){
-              // console.log(self.name + ": name is present")
-              let curUrl = curCam.url || null
-              
-              if (curUrl != null){
-                curDsResult[curCam.name] = curUrl
-              }
-            }
-          }
-
-          self.sendSocketNotification("DS_STREAM_INFO", {
-            dsIdx: curDsIdx,
-            camStreams: curDsResult
-          })
+      try {
+        if (self.config.showPositions || self.config.showBigPositions) {
+          self.ds[dsIdx].infos = await self.ds[dsIdx].client.getAllInfosOfAllCams(true)
         } else {
-          let syno = new Syno({
-            protocol: curDs.protocol,
-            host: curDs.host,
-            port: curDs.port,
-            account: curDs.user,
-            passwd: curDs.password,
-            ignoreCertificateErrors: true,
-            apiVersion: self.config.apiVersion
-          })
-
-          syno.dsIdx = curDsIdx
-
-          // console.log(self.name+": Created DS with id: "+curDsIdx+" and url: "+curDs.protocol+"://"+curDs.host+":"+curDs.port)
-          self.ds[curDsIdx] = {}
-          self.ds[curDsIdx].syno = syno
-
-          let validCamNames = {}
-          for (let i = 0; i < curDs.cams.length; i++) {
-            validCamNames[curDs.cams[i].name] = i
-          }
-          // console.log(self.name+": ValidCamNames of idx: "+curDsIdx+" :"+JSON.stringify(validCamNames))
-          syno.ss.listCameras(function (error, data) {
-            // console.log(self.name+": Listing Cams of: "+curDsIdx)
-            // console.log(self.name+": Error: "+JSON.stringify(error))
-            // console.log(self.name+": Data: "+JSON.stringify(data))
-
-            let idNameMap = {}
-            let idString = ""
-            if (typeof data !== "undefined") {
-              let cameras = data["cameras"]
-              let notFirst = false
-              for (let key in cameras) {
-                console.log(self.name + ": Found cam " + cameras[key]["newName"])
-                idNameMap[cameras[key]["id"]] = cameras[key]["newName"]
-                if (typeof validCamNames[cameras[key]["newName"]] !== "undefined") {
-                  if (notFirst) {
-                    idString += ","
-                  }
-                  idString += cameras[key]["id"]
-                  notFirst = true
-                }
-              }
-
-              self.ds[curDsIdx].idNameMap = idNameMap
-
-              self.ds[curDsIdx].ptzPresetInfo = {}
-              if (self.config.showPositions || self.config.showBigPositions) {
-                for (let curCamId in idNameMap) {
-                  self.ds[curDsIdx].ptzPresetInfo[curCamId] = []
-                  syno.ss.listPresetPtz(
-                    { cameraId: curCamId },
-                    function (ptzError, ptzData) {
-                      // console.log(self.name +": CurDS: "+ curDsIdx +" curCamId: "+ curCamId +": " +
-                      //     JSON.stringify(ptzData, null, 2)
-                      // )
-                      if (
-                        typeof ptzError !== "undefined" &&
-                        ptzError !== null &&
-                        typeof ptzError["code"] !== "undefined" &&
-                        (ptzError["code"] === 105 || ptzError["code"] === 498) &&
-                        self.config.skipOnPrivilegeError
-                      ) {
-                        console.log(self.name +": Got privilege error but skipping is activated!")
-                      } else {
-                        if (typeof ptzData !== "undefined" &&
-                            typeof ptzData.presets !== "undefined"
-                        ){
-                          self.ds[curDsIdx].ptzPresetInfo[curCamId] = ptzData.presets
-                          self.sendSocketNotification("DS_PTZ_PRESET_INFO", {
-                            dsIdx: curDsIdx,
-                            curCamId: curCamId,
-                            camName: idNameMap[curCamId],
-                            ptzData: ptzData.presets
-                          })
-                        }
-                      }
-                    }
-                  );
-                }
-              }
-
-              if (idString !== "") {
-                syno.ss.getLiveViewPathCamera(
-                  { idList: idString },
-                  function (liveViewError, liveViewData) {
-                    // console.log(self.name+": curDsIdx: "+JSON.stringify(curDsIdx))
-                    // console.log(self.name+": isNeeded: "+JSON.stringify(idsNeeded))
-                    // console.log(self.name+": idNameMap: "+JSON.stringify(idNameMap))
-                    if (typeof liveViewData !== "undefined") {
-                      // console.log(self.name+": Got url info of DS with id: "+curDsIdx)
-                      for (let curResIdx in liveViewData) {
-                        let curCamId = liveViewData[curResIdx]["id"]
-                        let curCamName = idNameMap[curCamId]
-                        if (typeof self.config.ds[curDsIdx].replaceHostPart === "undefined" ||
-                            !self.config.ds[curDsIdx].replaceHostPart
-                        ){
-                          curDsResult[curCamName] = encodeURI(liveViewData[curResIdx]["mjpegHttpPath"])
-                        } else {
-                          let curUrl = liveViewData[curResIdx]["mjpegHttpPath"]
-                          let newHost = self.config.ds[curDsIdx].host
-                          let newPort = null
-                          if (typeof self.config.ds[curDsIdx].replacePortPart !== "undefined" ||
-                              self.config.ds[curDsIdx].replacePortPart
-                          ){
-                            newPort = self.config.ds[curDsIdx].port
-                          }
-
-                          curDsResult[curCamName] = self.splitAndReplaceUrlParts(curUrl, self.config.ds[curDsIdx].protocol, newHost, newPort)
-                        }
-                      }
-                      let curPayload = {
-                        dsIdx: curDsIdx,
-                        camStreams: curDsResult
-                      }
-
-                      console.log( self.name + ": " + JSON.stringify(curPayload, null, 2) )
-
-                      self.urlUpdateInProgress = false
-                      self.sendSocketNotification("DS_STREAM_INFO", curPayload)
-                    } else {
-                      console.log( self.name + ": Got an  error while trying to fetch the live view data" )
-                      console.log( self.name + ": " + JSON.stringify(liveViewError, null, 2))
-                      if ( typeof liveViewError["code"] !== "undefined" &&
-                           (liveViewError["code"] === 105 ||
-                            liveViewError["code"] === 498
-                           ) && self.config.skipOnPrivilegeError
-                      ){
-                        console.log(self.name +": Got privilege error but skipping is activated!")
-                      } else {
-                        self.sendSocketNotification("DS_STREAM_INFO", {
-                          dsIdx: curDsIdx,
-                          camStreams: {}
-                        })
-                      }
-                    }
-                  }
-                )
-              } else {
-                console.log(self.name +": Could not find any valid cam for ds with idx: " +curDsIdx)
-                self.sendSocketNotification("DS_STREAM_INFO", {
-                  dsIdx: curDsIdx,
-                  camStreams: {}
-                })
-              }
-            } else if (error) {
-              console.log(self.name +": Problem during fetch of cams of ds with idx: "+ curDsIdx)
-              console.log(self.name + ": " + JSON.stringify(error, null, 2))
-              if (typeof error["code"] !== "undefined") {
-                if (error["code"] === 105 || error["code"] === 498) {
-                  if (self.config.skipOnPrivilegeError) {
-                    console.log(self.name + ": Got privilege error but skipping is activated!")
-                  } else {
-                    console.log("Skipping is disabled. Sending empty list of streams!")
-                    self.sendSocketNotification("DS_STREAM_INFO", {
-                      dsIdx: curDsIdx,
-                      camStreams: {}
-                    })
-                  }
-                } else {
-                  console.log("Unknown error. Sending empty list of streams!")
-                  self.sendSocketNotification("DS_STREAM_INFO", {
-                    dsIdx: curDsIdx,
-                    camStreams: {}
-                  })
-                }
-              } else {
-                self.sendSocketNotification("DS_STREAM_INFO", {
-                  dsIdx: curDsIdx,
-                  camStreams: {}
-                })
-              }
-            }
-          })
-        }//end synology part
-      } else {
-        for (let i = 0; i < curDs.cams.length; i++) {
-          let curCam = curDs.cams[i]
-          console.log(self.name + ": Sending dummy url for cam "+i+" of DS with idx: " + curDsIdx)
-          if (typeof curCam.name !== "undefined"){
-            curDsResult[curCam.name] = "http://dummy"
-          }
-
-          dummySend = true
+          self.ds[dsIdx].infos = await self.ds[dsIdx].client.getStreamInfoOfAllCams(true)
         }
+        
+      } catch (getInfosErr) {
+        if ((typeof getInfosErr.returnCode !== "undefined") && (getInfosErr.returnCode === 105)){
+          if (self.config.debug){
+            console.log(self.name + "Got privilege error while fetching the info for DiskStation with idx "+dsIdx+". Trying again without using cached data!")
+          }
+          try {
+            if (self.config.showPositions || self.config.showBigPositions) {
+              self.ds[dsIdx].infos = await self.ds[dsIdx].client.getAllInfosOfAllCams(false)
+            } else {
+              self.ds[dsIdx].infos = await self.ds[dsIdx].client.getStreamInfoOfAllCams(false)
+            }
+          } catch (getInfosNoCacheErr) {
+            console.log(getInfosNoCacheErr)
+          }
+        } else {
+          console.log(getInfosErr)
+        }
+      }
 
-        self.sendSocketNotification("DS_STREAM_INFO", {
-          dsIdx: curDsIdx,
-          camStreams: curDsResult
-        })
+      if (self.config.debug){
+        console.log(self.name + "New infos of DiskStation with idx: "+dsIdx)
+        console.log(JSON.stringify(self.ds[dsIdx].infos,null,2))
+      }
+      let newProtocol = null
+      let newHost = null
+      let newPort = null
+      
+      if (self.ds[dsIdx].replaceHostPart){
+        newProtocol = self.config.ds[dsIdx].protocol
+        newHost = self.config.ds[dsIdx].host
+      }
+
+      if(self.ds[dsIdx].replacePortPart){
+        newPort = self.config.ds[dsIdx].port
+      }
+
+      for (let camId in self.ds[dsIdx].camIds){
+        self.ds[dsIdx].infosPerId[camId].streamInfo = self.replaceUrlParts(
+                                                        self.ds[dsIdx].infosPerId[camId].streamInfo,
+                                                        newProtocol,
+                                                        newHost,
+                                                        newPort
+                                                      )
       }
     }
 
-    if (dummySend){
-      self.iterationCnt = 0
-      setTimeout(() => {
-        self.getStreamUrls();
-      }, 1000);
-    }
+    self.sendSocketNotification("DS_STREAM_INFO", self.ds)
   },
 
   Sleep: function (milliseconds) {
@@ -328,20 +163,80 @@ module.exports = NodeHelper.create({
     }
   },
 
-  socketNotificationReceived: function (notification, payload) {
+  socketNotificationReceived: async function (notification, payload) {
     const self = this
-    console.log(self.name + ": Received notification " + notification)
+
+    if ((typeof self.config !== "undefined") && (self.config.debug)) {
+      console.log(self.name + ": Received notification " + notification)
+    }
+    
     if (notification === "CONFIG" && self.started === false) {
       self.config = payload
+
+      if ((typeof self.config.ds !== "undefined") && (Array.isArray(self.config.ds))){
+        if (self.config.debug){
+          console.log(self.name + "At least one DiskStation is configured")
+        }
+        for (let dsIdx = 0; dsIdx < self.config.ds.length; dsIdx++) {
+          if (self.config.debug){
+            console.log(self.name + "Prepare datastructures for DiskStation with idx: "+dsIdx)
+          }
+          let curDs = {}
+          let curDsConfig = self.config.ds[dsIdx]
+
+          if (curDsConfig.protocol === "mjpeg"){
+            curDs.client = new MjpegDiskStation(dsIdx, curDsConfig.cams)
+            curDs.infos = await curDs.client.getAllInfosOfAllCams()
+          } else {
+            curDs.infos = {
+              camIds: [],
+              camNameIdMapping: {},
+              camIdNameMapping: {},
+              infosPerId: {}
+            }
+            let opts = {
+              protocol: curDsConfig.protocol || "http",
+              host: curDsConfig.host || null,
+              port: curDsConfig.port || 5000,
+              ignoreCertErrors: curDsConfig.ignoreCertErrors || true,
+              user: curDsConfig.user || null,
+              password: curDsConfig.password || null
+            }
+            curDs.client = new SynologySurveillanceStationClient(opts)
+
+            if ((typeof curDsConfig.replaceHostPart !== "undefined") && (!curDsConfig.replaceHostPart)) {
+              curDs.replaceHostPart = false
+            } else {
+              curDs.replaceHostPart = true
+            }
+
+            if ((typeof curDsConfig.replacePortPart !== "undefined") && (!curDsConfig.replacePortPart)) {
+              curDs.replacePortPart = false
+            } else {
+              curDs.replacePortPart = true
+            }
+          }
+
+          self.ds.push(curDs)
+        }
+      } else {
+        console.log(self.name + ": Could not find some DiskStation information in the config (option ds is missing or not an array)!")
+      }
       self.started = true
     } else if (notification === "INIT_DS") {
       self.lastRefresh = Date.now()
-      self.getStreamUrls()
+      self.urlUpdateInProgress = true
+      self.getInfoOfAllDs()
+      self.urlUpdateInProgress = false
     } else if (notification === "REFRESH_URLS" && self.started) {
       if ((Date.now() - self.lastRefresh) > self.config.minimumTimeBetweenRefreshs){
-        console.log(self.name + ": Refreshing the urls!")
+        if (self.config.debug){
+          console.log(self.name + ": Refreshing the URLs of all DiskStations!")
+        }
         self.lastRefresh = Date.now()
-        self.getStreamUrls()
+        self.urlUpdateInProgress = true
+        self.getInfoOfAllDs()
+        self.urlUpdateInProgress = false
       }
     } else if (notification === "SYNO_SS_CHANGE_CAM") {
       self.sendSocketNotification(notification, payload)
