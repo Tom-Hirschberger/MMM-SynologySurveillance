@@ -120,22 +120,22 @@ module.exports = NodeHelper.create({
       }
 
       if (typeof self.ds[dsIdx] !== "undefined"){
-        if(typeof self.ds[dsIdx].camNameIdMapping[camName] !== "undefined"){
-          let curCamId = self.ds[dsIdx].camNameIdMapping[camName]
+        if(typeof self.ds[dsIdx].infos.camNameIdMapping[camName] !== "undefined"){
+          let curCamId = self.ds[dsIdx].infos.camNameIdMapping[camName]
           if (self.config.debug){
-            console.log(self.name + ": Id of cam" + camName+" is "+self.ds[dsIdx].camNameIdMapping[camName])
+            console.log(self.name + ": Id of cam " + camName+" is "+self.ds[dsIdx].infos.camNameIdMapping[camName])
           }
 
-          if (typeof self.ds[dsIdx].infosPerId.presets[position] !== "undefined"){
+          if (typeof self.ds[dsIdx].infos.infosPerId[curCamId].presets[position] !== "undefined"){
             try {
-              await self.ds[dsIdx].client.goPTZPosition(curCamId, position, true)
+              await self.ds[dsIdx].client.goPTZPosition(curCamId, self.ds[dsIdx].infos.infosPerId[curCamId].presets[position].position, true)
             } catch (goPositionError){
               if ((typeof goPositionError.returnCode !== "undefined") && (goPositionError.returnCode === 105)){
                 if (self.config.debug){
                   console.log(self.name + "Got privilege error while changing the position of cam: "+camName+" of DiskStation with idx "+dsIdx+". Trying again without using cached data!")
                 }
                 try {
-                  await self.ds[dsIdx].client.goPTZPosition(curCamId, position, false)
+                  await self.ds[dsIdx].client.goPTZPosition(curCamId, self.ds[dsIdx].infos.infosPerId[curCamId].presets[position].position, false)
                 } catch (goPositionNoCacheError) {
                   console.log(goPositionNoCacheError)
                 }
