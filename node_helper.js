@@ -113,53 +113,41 @@ module.exports = NodeHelper.create({
 
   goPosition: async function (dsIdx, camName, position) {
     const self = this
-    let curDsIdx = dsIdx
-    let curCamName = camName
-    while (self.urlUpdateInProgress) {
-      self.Sleep(1000);
-    }
 
-    if (typeof self.ds[dsIdx] !== "undefined" &&
-        typeof self.ds[dsIdx].idNameMap !== "undefined"
-    ){
-      let camId = null
-      for (let curCamId in self.ds[dsIdx].idNameMap) {
-        if (self.ds[dsIdx].idNameMap[curCamId] === camName) {
-          console.log(self.name + ": Found id of cam: " + camName)
-          camId = curCamId
-          break
-        }
+    if (self.started){
+      while (self.urlUpdateInProgress) {
+        self.Sleep(1000);
       }
 
-      if (camId) {
-        if (typeof self.ds[dsIdx].ptzPresetInfo !== "undefined" &&
-            typeof self.ds[dsIdx].ptzPresetInfo[camId] !== "undefined"
-        ){
-          if (position >= 0 &&
-              position < Object.keys(self.ds[dsIdx].ptzPresetInfo[camId]).length
-          ){
-            console.log(self.name + ": Changing position of cam")
-            let curRealPosition = self.ds[dsIdx].ptzPresetInfo[camId][position]["position"]
-            console.log(self.name +": New position with idx: "+ position +" is "+ curRealPosition)
-            self.ds[dsIdx].syno.ss.goPresetPtz(
-              { cameraId: camId, position: curRealPosition },
-              function (goPtzError, goPtzData) {
-                self.sendSocketNotification("DS_CHANGED_POSITION", {
-                  dsIdx: curDsIdx,
-                  camName: curCamName,
-                  position: position
-                })
+      if (typeof self.ds[dsIdx] !== "undefined"){
+        if(typeof self.ds[dsIdx].camNameIdMapping[camName] !== "undefined"){
+          let curCamId = self.ds[dsIdx].camNameIdMapping[camName]
+          if (self.config.debug){
+            console.log(self.name + ": Id of cam" + camName+" is "+self.ds[dsIdx].camNameIdMapping[camName])
+          }
+
+          if (typeof self.ds[dsIdx].infosPerId.presets[position] !== "undefined"){
+            try {
+              await self.ds[dsIdx].client.goPTZPosition(curCamId, position, true)
+            } catch (goPositionError){
+              if ((typeof goPositionError.returnCode !== "undefined") && (goPositionError.returnCode === 105)){
+                if (self.config.debug){
+                  console.log(self.name + "Got privilege error while changing the position of cam: "+camName+" of DiskStation with idx "+dsIdx+". Trying again without using cached data!")
+                }
+                try {
+                  await self.ds[dsIdx].client.goPTZPosition(curCamId, position, false)
+                } catch (goPositionNoCacheError) {
+                  console.log(goPositionNoCacheError)
+                }
               }
-            )
+            }
+          } else {
+            console.log(self.name +": Could not change position of cam: "+ camName +" of ds: "+ dsIdx +" because there exists no position with idx "+position+"!")
           }
         } else {
-          console.log(self.name +": Could not change position of cam: "+ camName +" of ds: "+ dsIdx +" because no ptz preset info is available!")
+          console.log(self.name +": Could not change position of cam: "+ camName +" of ds: "+ dsIdx +" because there exists no information about a cam with this name!")
         }
-      } else {
-        console.log(self.name +": Could not change postion of cam: " + camName +" because no id of this cam is known!")
       }
-    } else {
-      console.log(self.name +": Could not change position of cam: "+ camName +" because no id name mapping is present for this ds ("+ dsIdx +") at the moment.")
     }
   },
 
