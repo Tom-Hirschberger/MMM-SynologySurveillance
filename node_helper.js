@@ -129,6 +129,7 @@ module.exports = NodeHelper.create({
           if (typeof self.ds[dsIdx].infos.infosPerId[curCamId].presets[position] !== "undefined"){
             try {
               await self.ds[dsIdx].client.goPTZPosition(curCamId, self.ds[dsIdx].infos.infosPerId[curCamId].presets[position].position, true)
+              self.sendSocketNotification("DS_CHANGED_POSITION", {dsIdx: dsIdx, camName: camName, position: position})
             } catch (goPositionError){
               if ((typeof goPositionError.returnCode !== "undefined") && (goPositionError.returnCode === 105)){
                 if (self.config.debug){
@@ -136,6 +137,7 @@ module.exports = NodeHelper.create({
                 }
                 try {
                   await self.ds[dsIdx].client.goPTZPosition(curCamId, self.ds[dsIdx].infos.infosPerId[curCamId].presets[position].position, false)
+                  self.sendSocketNotification("DS_CHANGED_POSITION", {dsIdx: dsIdx, camName: camName, position: position})
                 } catch (goPositionNoCacheError) {
                   console.log(goPositionNoCacheError)
                 }
