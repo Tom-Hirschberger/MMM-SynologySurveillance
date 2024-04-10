@@ -7,6 +7,7 @@
 Module.register("MMM-SynologySurveillance", {
   defaults: {
     ds: [],
+    debug: false,
     order: null,
     noUrlIcon: "fa-video-camera",
     currentBigIcon: "fa-hand-point-up",
@@ -161,7 +162,9 @@ Module.register("MMM-SynologySurveillance", {
     try {
       await imgElement.decode();
     } catch {
-      console.log("Image with idx: "+imgIdx+" has an undecodeable URL. Refreshing it!")
+      if (self.config.debug){
+        console.log(self.name+": Image with idx: "+imgIdx+" has an undecodeable URL. Refreshing it!")
+      }
       let src = imgElement.src;
       imgElement.src = "";
       imgElement.src = src;
@@ -209,7 +212,7 @@ Module.register("MMM-SynologySurveillance", {
 
       if (addCamEventListener) {
         camNameWrapper.addEventListener("click", () => {
-          self.sendSocketNotification("SYNO_SS_CHANGE_CAM", {
+          self.notificationReceived("SYNO_SS_CHANGE_CAM", {
             id: orderIdx
           })
         })
@@ -222,16 +225,12 @@ Module.register("MMM-SynologySurveillance", {
     innerCamWrapper.className = "innerCamWrapper"
     additionalClasses.forEach(element => innerCamWrapper.classList.add(element))
     let cam
-    console.log("Trying to get id of cam "+curCamName+" of DiskStation with idx: "+curDsIdx)
-    console.log("STREAM_INFO: ")
-    console.log(JSON.stringify(self.dsStreamInfo, null, 2))
     let camId
     if ( typeof self.dsStreamInfo[curDsIdx] !== "undefined" &&
          typeof self.dsStreamInfo[curDsIdx].camNameIdMapping !== "undefined" &&
          typeof self.dsStreamInfo[curDsIdx].camNameIdMapping[curCamName] !== "undefined"){
       camId = self.dsStreamInfo[curDsIdx].camNameIdMapping[curCamName]
     }
-    console.log("CamId: "+camId)
     if (typeof camId !== "undefined" &&
         typeof self.dsStreamInfo[curDsIdx] !== "undefined" &&
         typeof self.dsStreamInfo[curDsIdx].infosPerId !== "undefined" &&
@@ -259,7 +258,7 @@ Module.register("MMM-SynologySurveillance", {
     innerCamWrapper.appendChild(cam)
     if (addCamEventListener) {
       innerCamWrapper.addEventListener("click", () => {
-        self.sendSocketNotification("SYNO_SS_CHANGE_CAM", {
+        self.notificationReceived("SYNO_SS_CHANGE_CAM", {
           id: orderIdx
         })
       })
@@ -288,9 +287,6 @@ Module.register("MMM-SynologySurveillance", {
           }
 
           position.addEventListener("click", () => {
-            //TODO: Check if this is needed! Better way is to only update dom if position really changes
-            // self.dsPresetCurPosition[curDsIdx][curCamName] = curPosition
-            // self.updateDom(self.config.animationSpeed)
             self.sendSocketNotification("DS_CHANGE_POSITION", {
               dsIdx: curDsIdx,
               camName: curCamName,
@@ -349,7 +345,6 @@ Module.register("MMM-SynologySurveillance", {
 
   getDom: function() {
     const self = this
-    console.log(JSON.stringify(self.order, null, 2))
 
     const wrapper = document.createElement("div")
     wrapper.className = "synology-surveillance"
@@ -491,9 +486,11 @@ Module.register("MMM-SynologySurveillance", {
       self.curBigIdx = self.getNextCamId(self.curBigIdx, -1)
       self.updateDom(self.config.animationSpeed)
     } else if (notification === "SYNO_SS_CHANGE_CAM") {
-      console.log("Got notification to change cam to: " + payload.id)
+      if (self.config.debug){
+        console.log(self.name+": Got notification to change cam to: " + payload.id)
+      }
       if (typeof self.order[payload.id] !== "undefined") {
-        self.curBigIdx = self.payload.id
+        self.curBigIdx = payload.id
         self.updateDom(self.config.animationSpeed)
       }
     } else if (notification === "SYNO_SS_NEXT_POSITION") {
@@ -583,8 +580,9 @@ Module.register("MMM-SynologySurveillance", {
   socketNotificationReceived: function (notification, payload) {
     const self = this
     if (notification === "DS_STREAM_INFO") {
-      console.log("Got new Stream info of all ds.")
-      console.log(JSON.stringify(payload, null, 2))
+      if (self.config.debug){
+        console.log("Got new Stream info of all ds.")
+      }
 
       let atLeastOneChange = false
       for(let dsIdx = 0; dsIdx < payload.length; dsIdx++){
@@ -605,8 +603,6 @@ Module.register("MMM-SynologySurveillance", {
         self.updateDom(self.config.animationSpeed)
       }
     } else if (notification === "DS_CHANGED_POSITION") {
-      console.log("RECEIVED DS_CHANGED_POSITION with payload")
-      console.log(JSON.stringify(payload, null, 2))
       if (self.dsPresetCurPosition[payload.dsIdx][payload.camName] !== payload.position ) {
         self.dsPresetCurPosition[payload.dsIdx][payload.camName] = payload.position
         self.updateDom(self.config.changedPositionAnimationSpeed)

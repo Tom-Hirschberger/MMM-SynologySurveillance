@@ -378,7 +378,7 @@ class SynologySurveillanceStationClient {
                 }
             )
         } else {
-            return new Promise(function(myResolve, myReject) {
+            return new Promise(function(myResolve) {
                 myResolve(true)
             });
         }

@@ -19,6 +19,25 @@ module.exports = NodeHelper.create({
     self.mjpegDs = {}
   },
 
+  stop: async function(){
+    const self = this
+    if (self.config.debug){
+      console.log(self.name+": Will logout all clients")
+    }
+    for (let dsIdx = 0; dsIdx < self.ds.length; dsIdx++){
+      try{
+        await self.ds[dsIdx].client.logout()
+        if (self.config.debug){
+          console.log(self.name+": Logout of DiskStation with idx: "+dsIdx+" successful")
+        }
+      } catch {
+        if (self.config.debug){
+          console.log(self.name+": Logout of DiskStation with idx: "+dsIdx+" failed")
+        }
+      }
+    }
+  },
+
   replaceUrlParts: function(url, newProtocol=null, newHost=null, newPort=null){
     let newUrl = new URL(url)
     if(newProtocol != null){

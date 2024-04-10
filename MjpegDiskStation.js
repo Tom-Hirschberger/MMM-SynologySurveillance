@@ -51,6 +51,12 @@ class MjpegDiskStation {
         }
     }
 
+    logout(useCachedData) {
+        return new Promise(function(myResolve) {
+            myResolve(true)
+        });
+    }
+
     getStreamInfoOfAllCams(){
         const self = this
         return this.getAllInfosOfAllCams()
