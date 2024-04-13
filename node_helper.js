@@ -159,6 +159,12 @@ module.exports = NodeHelper.create({
                   self.sendSocketNotification("DS_CHANGED_POSITION", {dsIdx: dsIdx, camName: camName, position: position})
                 } catch (goPositionNoCacheError) {
                   console.log(goPositionNoCacheError)
+                  if (typeof oldPosition !== "undefined"){
+                    self.sendSocketNotification("DS_CHANGED_POSITION", {dsIdx: dsIdx, camName: camName, position: oldPosition})
+                  }
+                }
+              } else {
+                if (typeof oldPosition !== "undefined"){
                   self.sendSocketNotification("DS_CHANGED_POSITION", {dsIdx: dsIdx, camName: camName, position: oldPosition})
                 }
               }
