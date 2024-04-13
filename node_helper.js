@@ -130,7 +130,7 @@ module.exports = NodeHelper.create({
     return new Promise((resolve) => setTimeout(resolve, milliseconds));
   },
 
-  goPosition: async function (dsIdx, camName, position) {
+  goPosition: async function (dsIdx, camName, position, oldPosition) {
     const self = this
 
     if (self.started){
@@ -159,14 +159,21 @@ module.exports = NodeHelper.create({
                   self.sendSocketNotification("DS_CHANGED_POSITION", {dsIdx: dsIdx, camName: camName, position: position})
                 } catch (goPositionNoCacheError) {
                   console.log(goPositionNoCacheError)
+                  self.sendSocketNotification("DS_CHANGED_POSITION", {dsIdx: dsIdx, camName: camName, position: oldPosition})
                 }
               }
             }
           } else {
             console.log(self.name +": Could not change position of cam: "+ camName +" of ds: "+ dsIdx +" because there exists no position with idx "+position+"!")
+            if (typeof oldPosition !== "undefined"){
+              self.sendSocketNotification("DS_CHANGED_POSITION", {dsIdx: dsIdx, camName: camName, position: oldPosition})
+            }
           }
         } else {
           console.log(self.name +": Could not change position of cam: "+ camName +" of ds: "+ dsIdx +" because there exists no information about a cam with this name!")
+          if (typeof oldPosition !== "undefined"){
+            self.sendSocketNotification("DS_CHANGED_POSITION", {dsIdx: dsIdx, camName: camName, position: oldPosition})
+          }
         }
       }
     }
@@ -251,7 +258,7 @@ module.exports = NodeHelper.create({
       self.sendSocketNotification(notification, payload)
     } else if (notification === "DS_CHANGE_POSITION") {
       console.log(self.name +": Changing position of cam: "+ payload.camName +" of ds: "+ payload.dsIdx +" to: "+ payload.position)
-      self.goPosition(payload.dsIdx, payload.camName, payload.position)
+      self.goPosition(payload.dsIdx, payload.camName, payload.position, payload.oldPosition)
     } else if (notification === "SYNO_INVALIDATE_URL"){
       self.iterationCnt = self.config.iterationCnt+10
       self.getStreamUrls()

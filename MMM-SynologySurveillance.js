@@ -506,13 +506,15 @@ Module.register("MMM-SynologySurveillance", {
         camName = self.order[self.curBigIdx][3]
       }
       let position = self.getNextPositionIdx(dsIdx, camName, 1)
-      self.dsPresetCurPosition[dsIdx][camName] = position
-
+      
       self.sendSocketNotification("DS_CHANGE_POSITION", {
         dsIdx: dsIdx,
         camName: camName,
-        position: position
+        position: position,
+        oldPosition: self.dsPresetCurPosition[dsIdx][camName]
       })
+
+      self.dsPresetCurPosition[dsIdx][camName] = position
       if (self.config.showBigPositions || self.config.showPositions) {
         self.updateDom(self.config.animationSpeed)
       }
@@ -529,13 +531,16 @@ Module.register("MMM-SynologySurveillance", {
         camName = self.order[self.curBigIdx][3]
       }
       let position = self.getNextPositionIdx(dsIdx, camName, -1)
-      self.dsPresetCurPosition[dsIdx][camName] = position
 
       self.sendSocketNotification("DS_CHANGE_POSITION", {
         dsIdx: dsIdx,
         camName: camName,
-        position: position
+        position: position,
+        oldPosition: self.dsPresetCurPosition[dsIdx][camName]
       })
+
+      self.dsPresetCurPosition[dsIdx][camName] = position
+
       if (self.config.showBigPositions || self.config.showPositions) {
         self.updateDom(self.config.animationSpeed)
       }
@@ -543,7 +548,8 @@ Module.register("MMM-SynologySurveillance", {
       self.sendSocketNotification("DS_CHANGE_POSITION", {
         dsIdx: payload.dsIdx,
         camName: payload.camName,
-        position: payload.position
+        position: payload.position,
+        oldPosition: self.dsPresetCurPosition[payload.dsIdx][payload.camName]
       })
       self.dsPresetCurPosition[payload.dsIdx][payload.camName] = payload.position;
       if (self.config.showBigPositions || self.config.showPositions) {
