@@ -170,7 +170,7 @@ class GoPTZPositionError extends Error {
     }
 }
 
-class SynologySurveillanceStationClient {
+class MySynoSSClient {
     //Look-at: https://global.download.synology.com/download/Document/Software/DeveloperGuide/Package/SurveillanceStation/All/enu/Surveillance_Station_Web_API.pdf
 
     //webapi/query.cgi?api=SYNO.API.Info&method=Query&version=1
@@ -683,4 +683,4 @@ class SynologySurveillanceStationClient {
     }
 }
 
-module.exports = SynologySurveillanceStationClient;
+module.exports = MySynoSSClient;

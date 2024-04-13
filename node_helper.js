@@ -5,7 +5,7 @@
  * MIT Licensed.
  */
 const NodeHelper = require("node_helper")
-const SynologySurveillanceStationClient = require("./SynologySurveillanceStationClient")
+const MySynoSSClient = require("./MySynoSSClient")
 const MjpegDiskStation = require("./MjpegDiskStation")
 
 module.exports = NodeHelper.create({
@@ -211,7 +211,7 @@ module.exports = NodeHelper.create({
               user: curDsConfig.user || null,
               password: curDsConfig.password || null
             }
-            curDs.client = new SynologySurveillanceStationClient(opts)
+            curDs.client = new MySynoSSClient(opts)
 
             if ((typeof curDsConfig.replaceHostPart !== "undefined") && (!curDsConfig.replaceHostPart)) {
               curDs.replaceHostPart = false
