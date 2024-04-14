@@ -1,20 +1,21 @@
 # MMM-SynologySurveillance
 
 :warning:
-**This module does not support Surveillance Station in versions greater or equal 9.2 at the moment. The underlying library does not support the new api version introduced with version 9.2. I am working on a solution but it might take a while!**
+**As i changed from version 9.1.4.11002 to version 9.2.0-11289 of the Surveillance Station package i noticed that the user i use in this module needs to be in the "Manager" role at least, now. The "Viewer" role is not enough anymore. To change the setting open the webpage of the DiskStation->SurveillanceStation->Menu->Users and select the user you want to use. Then click on Edit->Permissions in the top bar. Select "Manager of all objects" and save. You are ready now!**
 
 This module queries the "mjpeg" streams of surveillance cams connected to Synology DiskStations and displays one or more cams in columns.
+As of version 0.1.0 it is possible to display any kind of mjpeg stream and / or a mix of synology mjpeg and other mjpeg streams.
+
 One selected cam can be displayed in a big single view.
 The cam in the big view can either be switched by notification or by click/touch.
-As of version 0.1.0 it is possible to display any kind of mjpeg stream and / or a mix of synology mjpeg and other mjpeg streams.
 
 Profiles are supported as well. Each cam can be configured with a profiles string that is used to decide if the cam will be displayed in the current view or not.
 
-The urls of the cams will be refreshed preiodically.
+The urls of the cams will be refreshed periodically.
 
-Attention: The "mpjeg" streams provide worse quality than the rtsp streams but displaying the rtsp streams is much more and needs some extra tools installed on the pi. If you search for an rtsp module try: <https://github.com/shbatm/MMM-RTSPStream> or try to convert the rtsp stream to a mjpeg stream. In my [vlc-rtsp2mjpeg-wrapper](https://github.com/Tom-Hirschberger/vlc-rtsp2mjpeg-wrapper) i provide a wrapper script which uses the vlc player to convert a rtsp stream to a mjpeg stream.
+Attention: The "mpjeg" streams provide worse quality than the rtsp streams but displaying the rtsp streams is much more affort and needs some extra tools installed on the pi. If you search for an rtsp module try: <https://github.com/shbatm/MMM-RTSPStream> or try to convert the rtsp stream to a mjpeg stream. In my [vlc-rtsp2mjpeg-wrapper](https://github.com/Tom-Hirschberger/vlc-rtsp2mjpeg-wrapper) i provide a wrapper script which uses the vlc player to convert a rtsp stream to a mjpeg stream.
 
-Because the module uses Flexbox Layout instead of Tables there is a lot of css styling possiblity.
+Because the module uses Flexbox Layout instead of tables there is a lot of css styling possiblity.
 
 ## Screenshots
 
@@ -39,31 +40,6 @@ npm install
 
 ## Configuration
 
-### MagicMirror configuration
-
-In MagicMirror version 2.16 and above electron is used in a version that prevents Cross-Origin Resource Sharing (CORS). This causes this module to be unable to display the mjpeg stream in the default setup. With a small modification to the default config it will work again:
-
-The default MagicMirror contains a line:
-
-```json5
-address: "localhost",
-```
-
-which most users change to something like:
-
-```json5
-address: "0.0.0.0",
-```
-
-to be the mirror be accassable via webbrowser.
-Both versions result in the violation of the CORS policy and the cam feed is not visible.
-
-If you change the address to the ip of your mirror it will work, i.e.
-
-```json5
-address: "192.168.178.10",
-```
-
 ### Module configuration
 
 The basic configuration of the module looks like:
@@ -87,7 +63,8 @@ There is a example topic after the description of the different configuration pa
 
 | Option | Description | Type | Default |
 | ------ | ----------- | ---- | ------- |
-| ds                      | The array containing the information about the discstations and cams | Array   | [] |
+| debug                   | If this option is set to true the module prints a lot more output to the console. May be helpful to debug some problems | Boolean | false |
+| ds                      | The array containing the information about the DiskStations and cams | Array   | [] |
 | vertical                | Should the vertical or horizontal layout be used? | Boolean | true |
 | showOneBig              | If this option is true an extra big view of the first cam is displayed at the beginning | Boolean | true |
 | addBigToNormal          | If this option is true an icon will be displayed in the small views while the cam is visible in the big view | Boolean | false |
@@ -97,19 +74,21 @@ There is a example topic after the description of the different configuration pa
 | order                   | An array of strings containing the names or alias (if you use the same cam name in different stations use the alias) of the cams in the order they should be displayed. If no order is provided the order of the DiskStations and cams in the configuration is used.  | Array of Strings  | null |
 | showPositions           | If set to true saved positions for this cam will be added as buttons; You can either click them or send an notification to change to this position | Boolean | true |
 | showBigPositions        | If set to true the saved positions of the current big cam will be displayed as buttons; You can either click them or change the positions by notification | Boolean | true |
-| urlRefreshInterval      | The module connects periodically to the discstations to get the current urls (and refreshes the authentication cookie). This option controls the interval (seconds) | Integer | 60 |
+| urlRefreshInterval      | The module connects periodically to the DiskStations to get the current urls (and refreshes the authentication cookie). This option controls the interval (seconds) | Integer | 60 |
 | onlyRefreshIfUrlChanges | Only if some of the urls of the currently visable cams (also the unreachable ones) changed the view is being refreshed if this value is set to true. | Boolean | true |
 | animationSpeed          | The refresh of the view can be animated. This options controls the animation speed (milliseconds) | Integer | 500 |
-| skipOnPrivilegeError    | Sometimes the DiskStations report a privilege error although the user does have valid rights to access the surveillance station. If activated the old urls of this station are kept valid and the module will try to get new urls during the next refresh. | Boolean | true |
+| changedPositionAnimationSpeed | The refresh of the view can be animated. In case of position changes this animation speed is used. To reduce flickering this is set to 0 in default | Integer | 0 |
 | updateDomOnShow | Controls if the dom objects should be recreated if the modules gets shown after hidden status. This is to avoid caching issues (especially with electron versions used in MagicMirror 2.18 and above) | Boolean | true |
 | appendTimestampToCamUrl | Controls if the creation timestamp will be added to the cam url. This is to avoid caching issues (especially with electron versions used in MagicMirror 2.18 and above) | Boolean | true |
 | imgDecodeCheckInterval | If set to a value greater 0 the module will check if the images can decoded in a interval of this value in seconds. If a image can not be decoded the URL will be refreshed. This is to avoid empty cam boxes. The value can be set for each cam indiviually, too. If both this and value for the camera is set the one of the camera is used. | Integer | -1 |
-| minimumTimeBetweenRefreshs | It may happen that there are a lot of requests to refresh the URLs of the cams in a short time. This value prevents the requests to fire to quickly. The module waits at least this amount of milliseconds till it requests new URLs of the discstations again. | Integer | 10000 |
+| minimumTimeBetweenRefreshs | It may happen that there are a lot of requests to refresh the URLs of the cams in a short time. This value prevents the requests to fire to quickly. The module waits at least this amount of milliseconds till it requests new URLs of the DiskStations again. | Integer | 10000 |
 | restoreBigAfterProfileChange | If multiple profiles are used and not all cams are visiable in all profiles it may happen that the cam that is displayed big changes on a profile change. If this setting is set to true the module tries to restore the previous state if the user returns to a previously selected profile. | Boolean | true |
 
 ### DiskStations
 
-As of version 0.1.0 of the module there are two types of discstations. Either ones of type Synology or dummies which can be used to show mjpeg streams.
+As of version 0.1.0 of the module there are two types of DiskStations. Either ones of type Synology or dummies which can be used to show mjpeg streams.
+
+As of version 0.2.0 of the module the option "skipOnPrivilegeError" is not used anymore and will be ignored.
 
 #### Synology
 
@@ -123,11 +102,10 @@ As of version 0.1.0 of the module there are two types of discstations. Either on
 | cams                 | The array containing the information about the cams to query | Array | Empty/true |
 | replaceHostPart      | If this option is set to true the host and protocol part in the stream url will be replaced with the values of the config file. I introduce this option because i access my cam with an public url (dynamic dns) but the DiskStation returns the private ip of the camera in the result. | Boolean | false |
 | replacePortPart      | If this option is set to true the prort part in the stream url will be replaced with the values of the config file. I introduce this option because i access my cam with https (port 50001)) but the DiskStation returns port of http (5000). | Boolean | false |
-| skipOnPrivilegeError | The Diskstation API throws privilage errors randomly. If this option is set to true this errors will be ignored and the last url or position info will be kept. | Boolean | true  |
 
 #### Dummie
 
-Only if the protocol of the discstation is set to "mjpeg" a dummy disc station will be used!
+Only if the protocol of the DiskStation is set to "mjpeg" a dummy DiskStation will be used!
 
 | Option                |Description | Type | Default/Mandatory |
 | -------------------- | -------- | ------- | --------- |
