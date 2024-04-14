@@ -7,6 +7,7 @@
 Module.register("MMM-SynologySurveillance", {
   defaults: {
     ds: [],
+    debug: false,
     order: null,
     noUrlIcon: "fa-video-camera",
     currentBigIcon: "fa-hand-point-up",
@@ -20,11 +21,10 @@ Module.register("MMM-SynologySurveillance", {
     urlRefreshInterval: 60,
     onlyRefreshIfUrlChanges: true,
     animationSpeed: 500,
+    changedPositionAnimationSpeed: 0,
     vertical: true,
-    skipOnPrivilegeError: true,
     updateDomOnShow: true,
     appendTimestampToCamUrl: true,
-    apiVersion: '6.2.2',
     provideDummyUrlAfterIterations: -1,
 	  imgDecodeCheckInterval: -1,
     minimumTimeBetweenRefreshs: 10000,
@@ -39,11 +39,12 @@ Module.register("MMM-SynologySurveillance", {
 	resume: function () {
 		const self = this
 		self.visible = true
+
+    if (self.config.updateDomOnShow){
+      self.updateDom(self.config.animationSpeed)
+    }
 	},
 
-  /**
-   * Apply any styles, if we have any.
-   */
   getStyles: function() {
     const self = this
     if (self.config.vertical) {
@@ -161,7 +162,9 @@ Module.register("MMM-SynologySurveillance", {
     try {
       await imgElement.decode();
     } catch {
-      console.log("Image with idx: "+imgIdx+" has an undecodeable URL. Refreshing it!")
+      if (self.config.debug){
+        console.log(self.name+": Image with idx: "+imgIdx+" has an undecodeable URL. Refreshing it!")
+      }
       let src = imgElement.src;
       imgElement.src = "";
       imgElement.src = src;
@@ -176,6 +179,7 @@ Module.register("MMM-SynologySurveillance", {
   getCamElement: function(orderIdx, additionalClasses, showCamName, showPositions, addCamEventListener, iconClasses) {
     const self = this
     let camConfig = self.order[orderIdx]
+
     let curDsIdx = camConfig[0]
     let curCamIdx = camConfig[1]
     let curCamAlias = camConfig[2]
@@ -208,7 +212,7 @@ Module.register("MMM-SynologySurveillance", {
 
       if (addCamEventListener) {
         camNameWrapper.addEventListener("click", () => {
-          self.sendSocketNotification("SYNO_SS_CHANGE_CAM", {
+          self.notificationReceived("SYNO_SS_CHANGE_CAM", {
             id: orderIdx
           })
         })
@@ -221,15 +225,23 @@ Module.register("MMM-SynologySurveillance", {
     innerCamWrapper.className = "innerCamWrapper"
     additionalClasses.forEach(element => innerCamWrapper.classList.add(element))
     let cam
-    if (typeof self.dsStreamInfo[curDsIdx] !== "undefined" &&
-        typeof self.dsStreamInfo[curDsIdx][curCamName] !== "undefined"
+    let camId
+    if ( typeof self.dsStreamInfo[curDsIdx] !== "undefined" &&
+         typeof self.dsStreamInfo[curDsIdx].camNameIdMapping !== "undefined" &&
+         typeof self.dsStreamInfo[curDsIdx].camNameIdMapping[curCamName] !== "undefined"){
+      camId = self.dsStreamInfo[curDsIdx].camNameIdMapping[curCamName]
+    }
+    if (typeof camId !== "undefined" &&
+        typeof self.dsStreamInfo[curDsIdx] !== "undefined" &&
+        typeof self.dsStreamInfo[curDsIdx].infosPerId !== "undefined" &&
+        typeof self.dsStreamInfo[curDsIdx].infosPerId[camId] !== "undefined"
     ){
       cam = document.createElement("img")
       cam.className = "cam"
       if (addTimestamp){
-        cam.src = self.dsStreamInfo[curDsIdx][curCamName]+"&timestamp="+Math.floor(Date.now() / 1000)
+        cam.src = self.dsStreamInfo[curDsIdx].infosPerId[camId].streamInfo+"&timestamp="+Math.floor(Date.now() / 1000)
       } else {
-        cam.src = self.dsStreamInfo[curDsIdx][curCamName]
+        cam.src = self.dsStreamInfo[curDsIdx].infosPerId[camId].streamInfo
       }
       if (imgDecodeCheckInterval > 0){
         self.imgs.push([cam,imgDecodeCheckInterval])
@@ -246,7 +258,7 @@ Module.register("MMM-SynologySurveillance", {
     innerCamWrapper.appendChild(cam)
     if (addCamEventListener) {
       innerCamWrapper.addEventListener("click", () => {
-        self.sendSocketNotification("SYNO_SS_CHANGE_CAM", {
+        self.notificationReceived("SYNO_SS_CHANGE_CAM", {
           id: orderIdx
         })
       })
@@ -258,10 +270,13 @@ Module.register("MMM-SynologySurveillance", {
       innerPositionWrapper.className = "innerPositionWrapper"
       additionalClasses.forEach(element => innerPositionWrapper.classList.add(element))
 
-      if (typeof self.dsPresetInfo[curDsIdx] !== "undefined" &&
-          typeof self.dsPresetInfo[curDsIdx][curCamName] !== "undefined"
+      if (typeof camId !== "undefined" &&
+          typeof self.dsStreamInfo[curDsIdx] !== "undefined" &&
+          typeof self.dsStreamInfo[curDsIdx].infosPerId !== "undefined" &&
+          typeof self.dsStreamInfo[curDsIdx].infosPerId[camId] !== "undefined" && 
+          typeof self.dsStreamInfo[curDsIdx].infosPerId[camId].presets !== "undefined"
       ){
-        for (let curPosition = 0; curPosition < self.dsPresetInfo[curDsIdx][curCamName].length; curPosition++) {
+        for (let curPosition = 0; curPosition < self.dsStreamInfo[curDsIdx].infosPerId[camId].presets.length; curPosition++) {
           let position = document.createElement("div");
           position.className = "position"
           additionalClasses.forEach(element => position.classList.add(element))
@@ -272,8 +287,6 @@ Module.register("MMM-SynologySurveillance", {
           }
 
           position.addEventListener("click", () => {
-            self.dsPresetCurPosition[curDsIdx][curCamName] = curPosition
-            self.updateDom(self.config.animationSpeed)
             self.sendSocketNotification("DS_CHANGE_POSITION", {
               dsIdx: curDsIdx,
               camName: curCamName,
@@ -332,74 +345,68 @@ Module.register("MMM-SynologySurveillance", {
 
   getDom: function() {
     const self = this
+
     const wrapper = document.createElement("div")
     wrapper.className = "synology-surveillance"
 
-	for (let imgIdx = 0; imgIdx < self.imgsTimeouts.length; imgIdx++){
-		clearTimeout(self.imgsTimeouts[imgIdx])
-	}
-
-	self.imgsTimeouts = []
-	self.imgs = []
-
-    //if we are in vertical layout and one cam should be displayed as big one we need to add the big one
-    //as first cam
-    if (self.config.vertical && self.config.showOneBig) {
-      if (typeof self.order[self.curBigIdx] !== "undefined") {
-        let camWrapper = self.getCamElement(self.curBigIdx, ["big"], self.config.showBigCamName, self.config.showBigPositions, false, ["fa", self.config.noUrlIcon])
-        wrapper.appendChild(camWrapper)
-      }
+    for (let imgIdx = 0; imgIdx < self.imgsTimeouts.length; imgIdx++){
+      clearTimeout(self.imgsTimeouts[imgIdx])
     }
 
-    //now lets check all other cams
-    for (let curOrderIdx = 0; curOrderIdx < self.order.length; curOrderIdx++) {
-      let curDsIdx = self.order[curOrderIdx][0];
-      let curCamIdx = self.order[curOrderIdx][1];
-      let curCamName = self.config.ds[curDsIdx].cams[curCamIdx].name;
+    self.imgsTimeouts = []
+    self.imgs = []
 
-      //maybe our job for this cam ends here cause a profile string is configured and the current profile does not match
-      if (typeof self.config.ds[curDsIdx].cams[curCamIdx].profiles === "undefined" ||
-          self.currentProfilePattern.test(self.config.ds[curDsIdx].cams[curCamIdx].profiles)
-      ){
-        if (self.config.showUnreachableCams ||
-              ( typeof self.dsStreamInfo[curDsIdx] !== "undefined" &&
-                typeof self.dsStreamInfo[curDsIdx][curCamName] !== "undefined"
-              )
+      //if we are in vertical layout and one cam should be displayed as big one we need to add the big one
+      //as first cam
+      if (self.config.vertical && self.config.showOneBig) {
+        if (typeof self.order[self.curBigIdx] !== "undefined") {
+          let camWrapper = self.getCamElement(self.curBigIdx, ["big"], self.config.showBigCamName, self.config.showBigPositions, false, ["fa", self.config.noUrlIcon])
+          wrapper.appendChild(camWrapper)
+        }
+      }
+
+      //now lets check all other cams
+      for (let curOrderIdx = 0; curOrderIdx < self.order.length; curOrderIdx++) {
+        let curDsIdx = self.order[curOrderIdx][0];
+        let curCamIdx = self.order[curOrderIdx][1];
+        let curCamName = self.config.ds[curDsIdx].cams[curCamIdx].name;
+
+        //maybe our job for this cam ends here cause a profile string is configured and the current profile does not match
+        if (typeof self.config.ds[curDsIdx].cams[curCamIdx].profiles === "undefined" ||
+            self.currentProfilePattern.test(self.config.ds[curDsIdx].cams[curCamIdx].profiles)
         ){
-          //either we should show a dummy for unreachable cams or we do have stream info for this one
-          if (!this.config.showOneBig || curOrderIdx !== this.curBigIdx) {
-            //the current cam is a "normal" one or we do not display one as big either
-            let camWrapper = self.getCamElement(curOrderIdx,[],self.config.showCamName,self.config.showPositions,self.config.showOneBig,["fa", this.config.noUrlIcon])
-            wrapper.appendChild(camWrapper)
-          } else {
-            if (self.config.vertical && self.config.addBigToNormal) {
-              //if we are in vertical layout and one camera is shown as big one we can decide if
-              //we want to add a dummy element to the "normal" camera list showing a icon
-              let camWrapper = self.getBigInNormalCamDummyElement(curOrderIdx, ["currentBig"], self.config.showCamName, self.config.showPositions, ["far", self.config.currentBigIcon])
+          if (self.config.showUnreachableCams ||
+                ( typeof self.dsStreamInfo[curDsIdx] !== "undefined" &&
+                  typeof self.dsStreamInfo[curDsIdx][curCamName] !== "undefined"
+                )
+          ){
+            //either we should show a dummy for unreachable cams or we do have stream info for this one
+            if (!this.config.showOneBig || curOrderIdx !== this.curBigIdx) {
+              //the current cam is a "normal" one or we do not display one as big either
+              let camWrapper = self.getCamElement(curOrderIdx,[],self.config.showCamName,self.config.showPositions,self.config.showOneBig,["fa", this.config.noUrlIcon])
               wrapper.appendChild(camWrapper)
-            } else if (!self.config.vertical) {
-              //so we are not in vertical layout (which means we are in horizontal layout currently)
-              //And we currently have the order idx of the cam that is the big one
-              let camWrapper = self.getCamElement(self.curBigIdx, ["big"], self.config.showBigCamName, self.config.showBigPositions, false, ["fa", self.config.noUrlIcon])
-              wrapper.appendChild(camWrapper)
+            } else {
+              if (self.config.vertical && self.config.addBigToNormal) {
+                //if we are in vertical layout and one camera is shown as big one we can decide if
+                //we want to add a dummy element to the "normal" camera list showing a icon
+                let camWrapper = self.getBigInNormalCamDummyElement(curOrderIdx, ["currentBig"], self.config.showCamName, self.config.showPositions, ["far", self.config.currentBigIcon])
+                wrapper.appendChild(camWrapper)
+              } else if (!self.config.vertical) {
+                //so we are not in vertical layout (which means we are in horizontal layout currently)
+                //And we currently have the order idx of the cam that is the big one
+                let camWrapper = self.getCamElement(self.curBigIdx, ["big"], self.config.showBigCamName, self.config.showBigPositions, false, ["fa", self.config.noUrlIcon])
+                wrapper.appendChild(camWrapper)
+              }
             }
           }
         }
       }
-    }
 
-	for (let imgIdx = 0; imgIdx < self.imgs.length; imgIdx++){
-    self.checkImgSrc(imgIdx)
-	}
+    for (let imgIdx = 0; imgIdx < self.imgs.length; imgIdx++){
+      self.checkImgSrc(imgIdx)
+    }
 
     return wrapper
-  },
-
-  resume: function () {
-    const self = this
-    if (self.config.updateDomOnShow){
-      self.updateDom(self.config.animationSpeed)
-    }
   },
 
   getNextCamId: function (curId, type = 1) {
@@ -479,9 +486,11 @@ Module.register("MMM-SynologySurveillance", {
       self.curBigIdx = self.getNextCamId(self.curBigIdx, -1)
       self.updateDom(self.config.animationSpeed)
     } else if (notification === "SYNO_SS_CHANGE_CAM") {
-      console.log("Got notification to change cam to: " + payload.id)
+      if (self.config.debug){
+        console.log(self.name+": Got notification to change cam to: " + payload.id)
+      }
       if (typeof self.order[payload.id] !== "undefined") {
-        self.curBigIdx = self.payload.id
+        self.curBigIdx = payload.id
         self.updateDom(self.config.animationSpeed)
       }
     } else if (notification === "SYNO_SS_NEXT_POSITION") {
@@ -497,13 +506,15 @@ Module.register("MMM-SynologySurveillance", {
         camName = self.order[self.curBigIdx][3]
       }
       let position = self.getNextPositionIdx(dsIdx, camName, 1)
-      self.dsPresetCurPosition[dsIdx][camName] = position
-
+      
       self.sendSocketNotification("DS_CHANGE_POSITION", {
         dsIdx: dsIdx,
         camName: camName,
-        position: position
+        position: position,
+        oldPosition: self.dsPresetCurPosition[dsIdx][camName]
       })
+
+      self.dsPresetCurPosition[dsIdx][camName] = position
       if (self.config.showBigPositions || self.config.showPositions) {
         self.updateDom(self.config.animationSpeed)
       }
@@ -520,13 +531,16 @@ Module.register("MMM-SynologySurveillance", {
         camName = self.order[self.curBigIdx][3]
       }
       let position = self.getNextPositionIdx(dsIdx, camName, -1)
-      self.dsPresetCurPosition[dsIdx][camName] = position
 
       self.sendSocketNotification("DS_CHANGE_POSITION", {
         dsIdx: dsIdx,
         camName: camName,
-        position: position
+        position: position,
+        oldPosition: self.dsPresetCurPosition[dsIdx][camName]
       })
+
+      self.dsPresetCurPosition[dsIdx][camName] = position
+
       if (self.config.showBigPositions || self.config.showPositions) {
         self.updateDom(self.config.animationSpeed)
       }
@@ -534,7 +548,8 @@ Module.register("MMM-SynologySurveillance", {
       self.sendSocketNotification("DS_CHANGE_POSITION", {
         dsIdx: payload.dsIdx,
         camName: payload.camName,
-        position: payload.position
+        position: payload.position,
+        oldPosition: self.dsPresetCurPosition[payload.dsIdx][payload.camName]
       })
       self.dsPresetCurPosition[payload.dsIdx][payload.camName] = payload.position;
       if (self.config.showBigPositions || self.config.showPositions) {
@@ -571,55 +586,32 @@ Module.register("MMM-SynologySurveillance", {
   socketNotificationReceived: function (notification, payload) {
     const self = this
     if (notification === "DS_STREAM_INFO") {
-      console.log("Got new Stream info of ds with id: " + payload.dsIdx);
-      //console.log(JSON.stringify(payload, null, 3))
-      if (
-        typeof self.dsStreamInfo[payload.dsIdx] !== "undefined" &&
-        self.config.onlyRefreshIfUrlChanges
-      ){
-        if (
-          JSON.stringify(self.dsStreamInfo[payload.dsIdx]) !==
-          JSON.stringify(payload.camStreams)
-        ) {
-          self.dsStreamInfo[payload.dsIdx] = payload.camStreams
-          self.updateDom(self.config.animationSpeed)
-          console.log("Some urls of ds with id " + payload.dsIdx + " changed. Updating view!")
-        } else {
-          console.log("No urls of ds with id " + payload.dsIdx + " changed. Skipping update of the view!")
-        }
-      } else {
-        console.log("Did not have any url information of ds with id: "+ payload.dsIdx +". Updating view!")
-        self.dsStreamInfo[payload.dsIdx] = payload.camStreams
-        self.updateDom(self.config.animationSpeed)
+      if (self.config.debug){
+        console.log("Got new Stream info of all ds.")
       }
-    } else if (notification === "SYNO_SS_CHANGE_CAM") {
-      console.log("Got notification to change cam to: " + payload.id)
-      if (typeof self.order[payload.id] !== "undefined") {
-        self.curBigIdx = payload.id
-        self.updateDom(self.config.animationSpeed)
-      }
-    } else if (notification === "DS_PTZ_PRESET_INFO") {
-      if (self.config.onlyRefreshIfUrlChanges) {
-        if (JSON.stringify(self.dsPresetInfo[payload.dsIdx][payload.camName]) !==
-            JSON.stringify(payload.ptzData)
-        ){
-          self.dsPresetInfo[payload.dsIdx][payload.camName] = payload.ptzData
-          if (self.config.showBigPositions || self.config.showPositions){
-            self.updateDom(self.config.animationSpeed)
+
+      let atLeastOneChange = false
+      for(let dsIdx = 0; dsIdx < payload.length; dsIdx++){
+        if(self.config.onlyRefreshIfUrlChanges){
+          if(
+            JSON.stringify(self.dsStreamInfo[dsIdx]) !==
+            JSON.stringify(payload[dsIdx].infos)
+          ) {
+            self.dsStreamInfo[dsIdx] = payload[dsIdx].infos
+            atLeastOneChange = true
           }
         } else {
-          console.log("Skipping position updates of ds with id: "+ payload.dsIdx +" because no values changed!")
+          self.dsStreamInfo[dsIdx] = payload[dsIdx].infos
         }
-      } else {
-        self.dsPresetInfo[payload.dsIdx][payload.camName] = payload.ptzData
-        if (self.config.showBigPositions || self.config.showPositions) {
-          self.updateDom(self.config.animationSpeed)
-        }
+      }
+
+      if ((!self.config.onlyRefreshIfUrlChanges) || atLeastOneChange){
+        self.updateDom(self.config.animationSpeed)
       }
     } else if (notification === "DS_CHANGED_POSITION") {
       if (self.dsPresetCurPosition[payload.dsIdx][payload.camName] !== payload.position ) {
         self.dsPresetCurPosition[payload.dsIdx][payload.camName] = payload.position
-        self.updateDom(self.config.animationSpeed)
+        self.updateDom(self.config.changedPositionAnimationSpeed)
       }
     }
   }
