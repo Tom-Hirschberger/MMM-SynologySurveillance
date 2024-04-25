@@ -1,7 +1,7 @@
 const axios = require("axios").default;
 const https = require("https");
 
-const commondErrorCodes = {
+const CommonErrorCodes = {
     100: "Unknown error",
     101: "Invalid parameters",
     102: "API does not exist",
@@ -12,7 +12,7 @@ const commondErrorCodes = {
     107: "Multiple login detected"
 }
 
-const authErrorCodes = {
+const AuthErrorCodes = {
     100: "Unkown error",
     101: "The account parameter is not specified",
     400: "Invalid user or password",
@@ -29,7 +29,7 @@ const authErrorCodes = {
     411: "Account Locked (when account max try exeed)"
 }
 
-const camErrorCodes = {
+const CamErrorCodes = {
     400: "Execution failed",
     401: "Parameter invalid",
     402: "Camera disabled"
@@ -49,8 +49,8 @@ const PTZPresetErroCodes = {
 class QueryApiVersionError extends Error {
     constructor(message, cause) {
         if (typeof cause.returnCode !== "undefined"){
-            if (typeof commondErrorCodes[cause.returnCode] !== "undefined"){
-                message = message + "\n"+commondErrorCodes[cause.returnCode]
+            if (typeof CommonErrorCodes[cause.returnCode] !== "undefined"){
+                message = message + "\n"+CommonErrorCodes[cause.returnCode]
             }
         }
 
@@ -66,10 +66,10 @@ class QueryApiVersionError extends Error {
 class LoginError extends Error {
     constructor(message, cause) {
         if (typeof cause.returnCode!== "undefined"){
-            if (typeof authErrorCodes[cause.returnCode] !== "undefined"){
-                message = message + "\n"+authErrorCodes[cause.returnCode]
-            } else if (typeof commondErrorCodes[cause.returnCode] !== "undefined"){
-                message = message + "\n"+commondErrorCodes[cause.returnCode]
+            if (typeof AuthErrorCodes[cause.returnCode] !== "undefined"){
+                message = message + "\n"+AuthErrorCodes[cause.returnCode]
+            } else if (typeof CommonErrorCodes[cause.returnCode] !== "undefined"){
+                message = message + "\n"+CommonErrorCodes[cause.returnCode]
             }
         }
         if (typeof cause.error !== "undefined"){
@@ -83,10 +83,10 @@ class LoginError extends Error {
 class LogoutError extends Error {
     constructor(message, cause) {
         if (typeof cause.returnCode !== "undefined"){
-            if (typeof authErrorCodes[cause.returnCode] !== "undefined"){
-                message = message + "\n"+authErrorCodes[cause.returnCode]
-            } else if (typeof commondErrorCodes[cause.returnCode] !== "undefined"){
-                message = message + "\n"+commondErrorCodes[cause.returnCode]
+            if (typeof AuthErrorCodes[cause.returnCode] !== "undefined"){
+                message = message + "\n"+AuthErrorCodes[cause.returnCode]
+            } else if (typeof CommonErrorCodes[cause.returnCode] !== "undefined"){
+                message = message + "\n"+CommonErrorCodes[cause.returnCode]
             }
         }
         if (typeof cause.error !== "undefined"){
@@ -101,10 +101,10 @@ class LogoutError extends Error {
 class ListCameraError extends Error {
     constructor(message, cause) {
         if (typeof cause.returnCode !== "undefined"){
-            if (typeof camErrorCodes[cause.returnCode] !== "undefined"){
-                message = message + "\n"+camErrorCodes[cause.returnCode]
-            } else if (typeof commondErrorCodes[cause.returnCode] !== "undefined"){
-                message = message + "\n"+commondErrorCodes[cause.returnCode]
+            if (typeof CamErrorCodes[cause.returnCode] !== "undefined"){
+                message = message + "\n"+CamErrorCodes[cause.returnCode]
+            } else if (typeof CommonErrorCodes[cause.returnCode] !== "undefined"){
+                message = message + "\n"+CommonErrorCodes[cause.returnCode]
             }
         }
         if (typeof cause.error !== "undefined"){
@@ -119,10 +119,10 @@ class ListCameraError extends Error {
 class GetCameraStreamInfoError extends Error {
     constructor(message, cause) {
         if (typeof cause.returnCode !== "undefined"){
-            if (typeof camErrorCodes[cause.returnCode] !== "undefined"){
-                message = message + "\n"+camErrorCodes[cause.returnCode]
-            } else if (typeof commondErrorCodes[cause.returnCode] !== "undefined"){
-                message = message + "\n"+commondErrorCodes[cause.returnCode]
+            if (typeof CamErrorCodes[cause.returnCode] !== "undefined"){
+                message = message + "\n"+CamErrorCodes[cause.returnCode]
+            } else if (typeof CommonErrorCodes[cause.returnCode] !== "undefined"){
+                message = message + "\n"+CommonErrorCodes[cause.returnCode]
             }
         }
         if (typeof cause.error !== "undefined"){
@@ -139,8 +139,8 @@ class ListPTZInfoError extends Error {
         if (typeof cause.returnCode !== "undefined"){
             if (typeof PTZPresetErroCodes[cause.returnCode] !== "undefined"){
                 message = message + "\n"+PTZPresetErroCodes[cause.returnCode]
-            } else if (typeof commondErrorCodes[cause.returnCode] !== "undefined"){
-                message = message + "\n"+commondErrorCodes[cause.returnCode]
+            } else if (typeof CommonErrorCodes[cause.returnCode] !== "undefined"){
+                message = message + "\n"+CommonErrorCodes[cause.returnCode]
             }
         }
         if (typeof cause.error !== "undefined"){
@@ -157,8 +157,8 @@ class GoPTZPositionError extends Error {
         if (typeof cause.returnCode !== "undefined"){
             if (typeof PTZErrorCodes[cause.returnCode] !== "undefined"){
                 message = message + "\n"+PTZErrorCodes[cause.returnCode]
-            } else if (typeof commondErrorCodes[cause.returnCode] !== "undefined"){
-                message = message + "\n"+commondErrorCodes[cause.returnCode]
+            } else if (typeof CommonErrorCodes[cause.returnCode] !== "undefined"){
+                message = message + "\n"+CommonErrorCodes[cause.returnCode]
             }
         }
         if (typeof cause.error !== "undefined"){
@@ -199,6 +199,7 @@ class MySynoSSClient {
     _init(opts) {
         this.#loginInfo = null
         this.#opts = opts
+        this.#debug = opts.debug
 
         let baseURL = opts.host+":"+opts.port+"/webapi"
         if (opts.protocol === "http"){
@@ -207,7 +208,7 @@ class MySynoSSClient {
             });
 
             this.#entryClient = axios.create({
-                baseURL: "http://"+baseURL+"/entry.cgi?",
+                baseURL: "http://"+baseURL+"/",
             });
         } else {
             this.#queryClient = axios.create({
@@ -219,7 +220,7 @@ class MySynoSSClient {
             });
 
             this.#entryClient = axios.create({
-                baseURL: "https://"+baseURL+"/entry.cgi?",
+                baseURL: "https://"+baseURL+"/",
                 httpsAgent: new https.Agent({
                     // This setting disables SSL certificate errors and reduces security
                     rejectUnauthorized: !opts.ignoreCertErrors
@@ -258,7 +259,7 @@ class MySynoSSClient {
                 .then((response) => {
                     let newVersionInfo = {}
                     for (let curApi in response.data.data){
-                        newVersionInfo[curApi] = response.data.data[curApi].maxVersion
+                        newVersionInfo[curApi] = { version: response.data.data[curApi].maxVersion, path: response.data.data[curApi].path}
                     }
                     self.#apiVersions = newVersionInfo
                     return newVersionInfo
@@ -298,7 +299,7 @@ class MySynoSSClient {
                         let api = "SYNO.API.Auth"
                         let loginObj = {
                             api: api,
-                            version: apiVersions[api],
+                            version: apiVersions[api].version,
                             method: "login",
                             account: self.#opts.user,
                             passwd: self.#opts.password,
@@ -309,7 +310,7 @@ class MySynoSSClient {
 
                         return self.#entryClient
                             .get(
-                                "",{
+                                apiVersions[api].path,{
                                     params: loginObj
                                 })
                                 .then((response) => {
@@ -347,7 +348,7 @@ class MySynoSSClient {
                     let api = "SYNO.API.Auth" 
                     let logoutObj = {
                         api: api,
-                        version: apiVersions[api],
+                        version: apiVersions[api].version,
                         method: "logout",
                         session: "SurveillanceStation",
                         _sid: self.#loginInfo.sid,
@@ -356,7 +357,7 @@ class MySynoSSClient {
 
                     return self.#entryClient
                         .get(
-                            "",{
+                            apiVersions[api].path,{
                                 params: logoutObj
                             })
                             .then((response) => {
@@ -398,14 +399,14 @@ class MySynoSSClient {
                     let camListObj = {
                         api: api,
                         method: "List",
-                        version: apiVersions[api],
+                        version: apiVersions[api].version,
                         _sid: this.#loginInfo.sid,
                         SynoToken: this.#loginInfo.synotoken
                     }
 
                     return this.#entryClient
                         .get(
-                            "",{
+                            apiVersions[api].path,{
                                 params: camListObj,
                             })
                             .then((response) => {
@@ -458,14 +459,14 @@ class MySynoSSClient {
                         api: api,
                         method: "GetLiveViewPath",
                         idList: camIds,
-                        version: apiVersions[api],
+                        version: apiVersions[api].version,
                         _sid: this.#loginInfo.sid,
                         SynoToken: this.#loginInfo.synotoken
                     }
 
                     return this.#entryClient
                         .get(
-                            "",{
+                            apiVersions[api].path,{
                                 params: camStreamInfoObj,
                             })
                             .then((response) => {
@@ -514,14 +515,14 @@ class MySynoSSClient {
                         api: api,
                         method: "Enum",
                         cameraId: camId,
-                        version: apiVersions[api],
+                        version: apiVersions[api].version,
                         _sid: this.#loginInfo.sid,
                         SynoToken: this.#loginInfo.synotoken
                     }
 
                     return this.#entryClient
                         .get(
-                            "",{
+                            apiVersions[api].path,{
                                 params: camPTZInfoObj,
                             })
                             .then((response) => {
@@ -587,14 +588,14 @@ class MySynoSSClient {
                         method: "GoPreset",
                         cameraId: camId,
                         position: position,
-                        version: apiVersions[api],
+                        version: apiVersions[api].version,
                         _sid: this.#loginInfo.sid,
                         SynoToken: this.#loginInfo.synotoken
                     }
 
                     return this.#entryClient
                         .get(
-                            "",{
+                            apiVersions[api].path,{
                                 params: camPTZInfoObj,
                             })
                             .then((response) => {

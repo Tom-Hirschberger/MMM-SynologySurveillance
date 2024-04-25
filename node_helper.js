@@ -222,8 +222,19 @@ module.exports = NodeHelper.create({
               port: curDsConfig.port || 5000,
               ignoreCertErrors: curDsConfig.ignoreCertErrors || true,
               user: curDsConfig.user || null,
-              password: curDsConfig.password || null
+              password: curDsConfig.password || null,
             }
+
+            if (typeof curDsConfig.debug !== "undefined"){
+              opts.debug = curDsConfig.debug
+            } else {
+              opts.debug = self.config.debug
+            }
+
+            if (opts.debug != true){
+              opts.debug = false
+            }
+
             curDs.client = new MySynoSSClient(opts)
 
             if ((typeof curDsConfig.replaceHostPart !== "undefined") && (!curDsConfig.replaceHostPart)) {
