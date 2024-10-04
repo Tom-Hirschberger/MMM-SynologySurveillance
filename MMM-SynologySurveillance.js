@@ -452,14 +452,32 @@ Module.register("MMM-SynologySurveillance", {
       }
     } else if (type === 0) {
       //keep the current cam if possible but call the function to find the next one if the profile does not match
-      let curDsIdx = self.order[curId][0]
-      let curCamId = self.order[curId][1]
+      if (self.config.debug){
+        console.log(self.name+": current order ->\n"+JSON.stringify(self.order))
+      }
 
-      if (typeof self.config.ds[curDsIdx].cams[curCamId].profiles === "undefined" ||
-          self.currentProfilePattern.test(self.config.ds[curDsIdx].cams[curCamId].profiles)
-      ){
-        return curId
+      if (curId < 0 || (curId >= self.order.length)){
+        curId = 0
+        if (self.config.debug){
+          console.log(self.name+": Reset big cam idx to 0 as it is either negative or to big")
+        }
+      }
+
+      if (typeof self.order[curId] !== "undefined"){
+        let curDsIdx = self.order[curId][0]
+        let curCamId = self.order[curId][1]
+
+        if (typeof self.config.ds[curDsIdx].cams[curCamId].profiles === "undefined" ||
+            self.currentProfilePattern.test(self.config.ds[curDsIdx].cams[curCamId].profiles)
+        ){
+          return curId
+        } else {
+          return self.getNextCamId(curId, 1)
+        }
       } else {
+        if (self.config.debug){
+          console.log(self.name+": The order info does not contain the index "+curId+". We try to find the next higher one. If this is not possible it will be resetted!")
+        }
         return self.getNextCamId(curId, 1)
       }
     }
