@@ -40,7 +40,7 @@ Module.register("MMM-SynologySurveillance", {
 		const self = this
 		self.visible = true
 
-    if (self.config.updateDomOnShow){
+    if (self.config.updateDomOnShow || self.dirty){
       self.updateDom(self.config.animationSpeed)
     }
 	},
@@ -69,6 +69,7 @@ Module.register("MMM-SynologySurveillance", {
     self.currentProfilePattern = new RegExp(".*")
     self.bigIdxPerProfile = {}
     self.visible = true
+    self.dirty = false
 
     if (self.config.order !== null) {
       let nameDsCamIdxMap = {}
@@ -599,7 +600,7 @@ Module.register("MMM-SynologySurveillance", {
         self.currentProfile = payload.to
         self.currentProfilePattern = new RegExp("\\b" + payload.to + "\\b")
 
-        if (self.visible){
+        
           if (typeof payload.from !== "undefined"){
             if (self.config.restoreBigAfterProfileChange){
               self.bigIdxPerProfile[payload.from] = self.curBigIdx
@@ -613,12 +614,19 @@ Module.register("MMM-SynologySurveillance", {
             }
           }
 
-          self.curBigIdx = self.getNextCamId(self.curBigIdx, 0)
-          if (self.config.debug){
-            console.log(self.name+": after profile check the used big cam idx is: "+self.curBigIdx)
+          if (self.visible){
+            if (self.config.debug) {
+              console.log(self.name+": module is not visible at the moment. Saved the profile but skip calculation of new idx")
+            }
+
+            self.curBigIdx = self.getNextCamId(self.curBigIdx, 0)
+            if (self.config.debug){
+              console.log(self.name+": after profile check the used big cam idx is: "+self.curBigIdx)
+            }
+            self.updateDom(self.config.animationSpeed)
+          } else {
+            self.dirty = true
           }
-          self.updateDom(self.config.animationSpeed)
-        }
       } else {
         if (self.config.debug){
           console.log(self.name+": Got a invalid CHANGED_PROFILE notification with missing \"to\" payload->\n"+JSON.stringify(payload))
