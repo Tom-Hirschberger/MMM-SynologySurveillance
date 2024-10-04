@@ -68,6 +68,7 @@ Module.register("MMM-SynologySurveillance", {
     self.currentProfile = ""
     self.currentProfilePattern = new RegExp(".*")
     self.bigIdxPerProfile = {}
+    self.visible = true
 
     if (self.config.order !== null) {
       let nameDsCamIdxMap = {}
