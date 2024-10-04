@@ -569,14 +569,15 @@ Module.register("MMM-SynologySurveillance", {
 
           if(typeof self.bigIdxPerProfile[self.currentProfile] !== "undefined"){
             self.curBigIdx = self.bigIdxPerProfile[self.currentProfile]
-          } else {
-            self.curBigIdx = self.getNextCamId(self.curBigIdx, 0)
           }
-        } else {
-          self.curBigIdx = self.getNextCamId(self.curBigIdx, 0)
         }
-        
+
+        self.curBigIdx = self.getNextCamId(self.curBigIdx, 0)
         self.updateDom(self.config.animationSpeed)
+      } else {
+        if (self.config.debug){
+          console.log(self.name+": Got a invalid CHANGED_PROFILE notification with missing \"to\" payload->\n"+JSON.stringify(payload))
+        }
       }
     } else if (notification === "SYNO_INVALIDATE_URL"){
       self.sendSocketNotification(notification, payload)
