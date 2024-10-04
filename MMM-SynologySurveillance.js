@@ -26,23 +26,18 @@ Module.register("MMM-SynologySurveillance", {
     updateDomOnShow: true,
     appendTimestampToCamUrl: true,
     provideDummyUrlAfterIterations: -1,
-	imgDecodeCheckInterval: -1,
+	  imgDecodeCheckInterval: -1,
     minimumTimeBetweenRefreshs: 10000,
     restoreBigAfterProfileChange: true,
-    resetBigCamIdxOnSuspend: false,
+    moduleIsDisplayedInEveryProfile: false
   },
 
   suspend: function () {
 		const self = this
-		self.visible = false
-		if(self.config.resetBigCamIdxOnSuspend){
-			self.curBigIdx = 0
-		}
 	},
 
 	resume: function () {
 		const self = this
-		self.visible = true
 
 		if (self.config.updateDomOnShow){
 		  self.updateDom(self.config.animationSpeed)
@@ -72,9 +67,13 @@ Module.register("MMM-SynologySurveillance", {
     self.currentProfile = ""
     self.currentProfilePattern = new RegExp(".*")
     self.bigIdxPerProfile = {}
-    self.visible = true
     self.allModulesStarted = false
-
+    if (typeof self.data.classes !== "undefined"){
+      self.allModulesClasses = self.data.classes.split(" ")
+    } else {
+      self.allModulesClasses = null
+    }
+    
     if (self.config.order !== null) {
       let nameDsCamIdxMap = {}
       for (let curDsIdx = 0; curDsIdx < self.config.ds.length; curDsIdx++) {
@@ -424,80 +423,80 @@ Module.register("MMM-SynologySurveillance", {
   getNextCamId: function (curId, type = 1) {
     const self = this
     let nextCamId = curId
-    if (self.allModulesStarted && self.visible) {
+    if (self.config.moduleIsDisplayedInEveryProfile || ((self.allModulesClasses != null) && ((self.currentProfile !== "") && (self.allModulesClasses.includes(self.currentProfile))))) {
     	if (self.config.debug) {
-			console.log(self.name+": All modules are started and this module is visiable at the moment. Check the cam idx and recalculate if needed!")
-		}
-		if (type === 1) {
-		  //get the next cam id (current + 1)
-		  nextCamId = curId + 1
-		  for (let i = 0; i < self.order.length; i++) {
-		    if (nextCamId >= self.order.length) {
-		      nextCamId = 0
-		    }
-		    let curDsIdx = self.order[nextCamId][0]
-		    let curCamId = self.order[nextCamId][1]
-		    if (typeof self.config.ds[curDsIdx].cams[curCamId].profiles === "undefined" ||
-		        self.currentProfilePattern.test(self.config.ds[curDsIdx].cams[curCamId].profiles)
-		    ){
-		      return nextCamId
-		    }
-		    nextCamId = nextCamId + 1
+			  console.log(self.name+": Either the moduleIsDisplayedInEveryProfile is set to true or this module is currently displayed. Checking for the current big cam index and recalcualte it if needed.")
 		  }
-		} else if (type === -1) {
-		  //get the previous cam id (current - 1)
-		  nextCamId = curId - 1
-		  for (let i = 0; i < self.order.length; i++) {
-		    if (nextCamId < 0) {
-		      nextCamId = self.order.length - 1
-		    }
-		    let curDsIdx = self.order[nextCamId][0]
-		    let curCamId = self.order[nextCamId][1]
-		    if (typeof self.config.ds[curDsIdx].cams[curCamId].profiles === "undefined" ||
-		        self.currentProfilePattern.test(self.config.ds[curDsIdx].cams[curCamId].profiles)
-		    ) {
-		      return nextCamId
-		    }
-		    nextCamId = nextCamId - 1
-		  }
-		} else if (type === 0) {
-			  //keep the current cam if possible but call the function to find the next one if the profile does not match
-			  if (curId < 0 || (curId >= self.order.length)){
-				curId = 0
-				if (self.config.debug){
-				  console.log(self.name+": Reset big cam idx to 0 as it is either negative or to big")
-				}
-			  }
+      if (type === 1) {
+        //get the next cam id (current + 1)
+        nextCamId = curId + 1
+        for (let i = 0; i < self.order.length; i++) {
+          if (nextCamId >= self.order.length) {
+            nextCamId = 0
+          }
+          let curDsIdx = self.order[nextCamId][0]
+          let curCamId = self.order[nextCamId][1]
+          if (typeof self.config.ds[curDsIdx].cams[curCamId].profiles === "undefined" ||
+              self.currentProfilePattern.test(self.config.ds[curDsIdx].cams[curCamId].profiles)
+          ){
+            return nextCamId
+          }
+          nextCamId = nextCamId + 1
+        }
+      } else if (type === -1) {
+        //get the previous cam id (current - 1)
+        nextCamId = curId - 1
+        for (let i = 0; i < self.order.length; i++) {
+          if (nextCamId < 0) {
+            nextCamId = self.order.length - 1
+          }
+          let curDsIdx = self.order[nextCamId][0]
+          let curCamId = self.order[nextCamId][1]
+          if (typeof self.config.ds[curDsIdx].cams[curCamId].profiles === "undefined" ||
+              self.currentProfilePattern.test(self.config.ds[curDsIdx].cams[curCamId].profiles)
+          ) {
+            return nextCamId
+          }
+          nextCamId = nextCamId - 1
+        }
+      } else if (type === 0) {
+          //keep the current cam if possible but call the function to find the next one if the profile does not match
+          if (curId < 0 || (curId >= self.order.length)){
+          curId = 0
+          if (self.config.debug){
+            console.log(self.name+": Reset big cam idx to 0 as it is either negative or to big")
+          }
+          }
 
-			  if (typeof self.order[curId] !== "undefined"){
-				let curDsIdx = self.order[curId][0]
-				let curCamId = self.order[curId][1]
+          if (typeof self.order[curId] !== "undefined"){
+          let curDsIdx = self.order[curId][0]
+          let curCamId = self.order[curId][1]
 
-				if (typeof self.config.ds[curDsIdx].cams[curCamId].profiles === "undefined" ||
-				    self.currentProfilePattern.test(self.config.ds[curDsIdx].cams[curCamId].profiles)
-				){
-				  if (self.config.debug){
-				    console.log(self.name+": The cam id "+curId+" is valid for profile "+self.currentProfile+". Using it.")
-				  }
-				  return curId
-				} else {
-				  if (self.config.debug){
-				    console.log(self.name+": The cam id "+curId+" is NOT valid for profile "+self.currentProfile+". Trying to find a suitable one.")
-				  }
-				  return self.getNextCamId(curId, 1)
-				}
-			  } else {
-				if (self.config.debug){
-				  console.log(self.name+": The order info does not contain the index "+curId+". We try to find the next higher one. If this is not possible it will be resetted!")
-				}
-				return self.getNextCamId(curId, 1)
-			  }
-		}
-	} else {
-		if (self.config.debug) {
-			console.log(self.name+": Module is  not visiable at the moment. Keep the current cam idx "+curId)
-		}
-	}
+          if (typeof self.config.ds[curDsIdx].cams[curCamId].profiles === "undefined" ||
+              self.currentProfilePattern.test(self.config.ds[curDsIdx].cams[curCamId].profiles)
+          ){
+            if (self.config.debug){
+              console.log(self.name+": The cam id "+curId+" is valid for profile "+self.currentProfile+". Using it.")
+            }
+            return curId
+          } else {
+            if (self.config.debug){
+              console.log(self.name+": The cam id "+curId+" is NOT valid for profile "+self.currentProfile+". Trying to find a suitable one.")
+            }
+            return self.getNextCamId(curId, 1)
+          }
+          } else {
+          if (self.config.debug){
+            console.log(self.name+": The order info does not contain the index "+curId+". We try to find the next higher one. If this is not possible it will be resetted!")
+          }
+          return self.getNextCamId(curId, 1)
+          }
+      }
+    } else {
+      if (self.config.debug) {
+        console.log(self.name+": Either the this module is currently not displayed or no profiles are used. Using the current big cam idx: "+nextCamId)
+      }
+    }
 
     return nextCamId
   },
