@@ -470,8 +470,14 @@ Module.register("MMM-SynologySurveillance", {
         if (typeof self.config.ds[curDsIdx].cams[curCamId].profiles === "undefined" ||
             self.currentProfilePattern.test(self.config.ds[curDsIdx].cams[curCamId].profiles)
         ){
+          if (self.config.debug){
+            console.log(self.name+": The cam id "+curId+" is valid for profile "+self.currentProfile+". Using it.")
+          }
           return curId
         } else {
+          if (self.config.debug){
+            console.log(self.name+": The cam id "+curId+" is NOT valid for profile "+self.currentProfile+". Trying to find a suitable one.")
+          }
           return self.getNextCamId(curId, 1)
         }
       } else {
@@ -592,24 +598,26 @@ Module.register("MMM-SynologySurveillance", {
         self.currentProfile = payload.to
         self.currentProfilePattern = new RegExp("\\b" + payload.to + "\\b")
 
-        if (typeof payload.from !== "undefined"){
-          if (self.config.restoreBigAfterProfileChange){
-            self.bigIdxPerProfile[payload.from] = self.curBigIdx
-          }
+        if (self.visible){
+          if (typeof payload.from !== "undefined"){
+            if (self.config.restoreBigAfterProfileChange){
+              self.bigIdxPerProfile[payload.from] = self.curBigIdx
+            }
 
-          if(typeof self.bigIdxPerProfile[self.currentProfile] !== "undefined"){
-            self.curBigIdx = self.bigIdxPerProfile[self.currentProfile]
-            if (self.config.debug){
-              console.log(self.name+": restored big cam idx is: "+self.curBigIdx)
+            if(typeof self.bigIdxPerProfile[self.currentProfile] !== "undefined"){
+              self.curBigIdx = self.bigIdxPerProfile[self.currentProfile]
+              if (self.config.debug){
+                console.log(self.name+": restored big cam idx is: "+self.curBigIdx)
+              }
             }
           }
-        }
 
-        self.curBigIdx = self.getNextCamId(self.curBigIdx, 0)
-        if (self.config.debug){
-          console.log(self.name+": after profile check the used big cam idx is: "+self.curBigIdx)
+          self.curBigIdx = self.getNextCamId(self.curBigIdx, 0)
+          if (self.config.debug){
+            console.log(self.name+": after profile check the used big cam idx is: "+self.curBigIdx)
+          }
+          self.updateDom(self.config.animationSpeed)
         }
-        self.updateDom(self.config.animationSpeed)
       } else {
         if (self.config.debug){
           console.log(self.name+": Got a invalid CHANGED_PROFILE notification with missing \"to\" payload->\n"+JSON.stringify(payload))
