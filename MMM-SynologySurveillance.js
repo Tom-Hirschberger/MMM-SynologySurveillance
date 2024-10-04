@@ -158,7 +158,8 @@ Module.register("MMM-SynologySurveillance", {
 
   checkImgSrc: async function (imgIdx) {
     const self = this
-    let imgElement = self.imgs[imgIdx][0]
+    let imgInfo = self.imgs[imgIdx]
+    let imgElement = imgInfo[0]
     try {
       await imgElement.decode();
     } catch {
@@ -171,9 +172,14 @@ Module.register("MMM-SynologySurveillance", {
       self.sendSocketNotification("REFRESH_URLS")
     }
 
-    self.imgsTimeouts[imgIdx] = setTimeout(() => {
-      self.checkImgSrc(imgIdx)
-    }, self.imgs[imgIdx][1])
+    if (typeof self.imgs !== "undefined"){
+      if (typeof self.imgsTimeouts[imgIdx] !== "undefined"){
+        clearTimeout(self.imgsTimeouts[imgIdx])
+      }
+      self.imgsTimeouts[imgIdx] = setTimeout(() => {
+        self.checkImgSrc(imgIdx)
+      }, imgInfo[1])
+    }
   },
 
   getCamElement: function(orderIdx, additionalClasses, showCamName, showPositions, addCamEventListener, iconClasses) {
@@ -405,7 +411,7 @@ Module.register("MMM-SynologySurveillance", {
     for (let imgIdx = 0; imgIdx < self.imgs.length; imgIdx++){
       self.checkImgSrc(imgIdx)
     }
-
+    
     return wrapper
   },
 
@@ -413,8 +419,9 @@ Module.register("MMM-SynologySurveillance", {
     const self = this
     let nextCamId = curId
     if (type === 1) {
+      //get the next cam id (current + 1)
+      nextCamId = curId + 1
       for (let i = 0; i < self.order.length; i++) {
-        nextCamId = curId + 1
         if (nextCamId >= self.order.length) {
           nextCamId = 0
         }
@@ -425,10 +432,12 @@ Module.register("MMM-SynologySurveillance", {
         ){
           return nextCamId
         }
+        nextCamId = nextCamId + 1
       }
     } else if (type === -1) {
+      //get the previous cam id (current - 1)
+      nextCamId = curId - 1
       for (let i = 0; i < self.order.length; i++) {
-        nextCamId = curId - 1
         if (nextCamId < 0) {
           nextCamId = self.order.length - 1
         }
@@ -439,10 +448,13 @@ Module.register("MMM-SynologySurveillance", {
         ) {
           return nextCamId
         }
+        nextCamId = nextCamId - 1
       }
     } else if (type === 0) {
+      //keep the current cam if possible but call the function to find the next one if the profile does not match
       let curDsIdx = self.order[curId][0]
       let curCamId = self.order[curId][1]
+
       if (typeof self.config.ds[curDsIdx].cams[curCamId].profiles === "undefined" ||
           self.currentProfilePattern.test(self.config.ds[curDsIdx].cams[curCamId].profiles)
       ){
@@ -569,14 +581,21 @@ Module.register("MMM-SynologySurveillance", {
 
           if(typeof self.bigIdxPerProfile[self.currentProfile] !== "undefined"){
             self.curBigIdx = self.bigIdxPerProfile[self.currentProfile]
-          } else {
-            self.curBigIdx = self.getNextCamId(self.curBigIdx, 0)
+            if (self.config.debug){
+              console.log(self.name+": restored big cam idx is: "+self.curBigIdx)
+            }
           }
-        } else {
-          self.curBigIdx = self.getNextCamId(self.curBigIdx, 0)
         }
-        
+
+        self.curBigIdx = self.getNextCamId(self.curBigIdx, 0)
+        if (self.config.debug){
+          console.log(self.name+": after profile check the used big cam idx is: "+self.curBigIdx)
+        }
         self.updateDom(self.config.animationSpeed)
+      } else {
+        if (self.config.debug){
+          console.log(self.name+": Got a invalid CHANGED_PROFILE notification with missing \"to\" payload->\n"+JSON.stringify(payload))
+        }
       }
     } else if (notification === "SYNO_INVALIDATE_URL"){
       self.sendSocketNotification(notification, payload)

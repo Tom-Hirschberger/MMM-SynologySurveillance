@@ -1,6 +1,6 @@
 {
   "name": "MMM-SynologySurveillance",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "A MaigcMirror² module which displays video streams of cameras either connected to a Synology Diskstation or which provide a mjpeg stream.",
   "main": "MMM-SynologySurveillance.js",
   "dependencies": {
