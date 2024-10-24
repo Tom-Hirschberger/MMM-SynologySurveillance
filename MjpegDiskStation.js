@@ -25,7 +25,7 @@ class MjpegDiskStation {
                 if( typeof opts[camIdx].name !== "undefined"){
                     camNameIdMapping[opts[camIdx].name] = camIdx
                     camIdNameMapping[camIdx] = opts[camIdx].name
-                } else if (typeof opts.alias !== "undefined"){
+                } else if (typeof opts[camIdx].alias !== "undefined"){
                     camNameIdMapping[opts[camIdx].alias] = camIdx
                     camIdNameMapping[camIdx] = opts[camIdx].alias
                 }

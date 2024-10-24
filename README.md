@@ -251,11 +251,11 @@ If we do want to add two more cameras now which are not connected to any DiskSta
                     protocol: "mjpeg",
                     cams: [
                         {
-                            alias: "Cam4",
+                            name: "Cam4",
                             url: "http://mycam4:8000"
                         },
                         {
-                            alias: "Cam5",
+                            name: "Cam5",
                             url: "http://myuser:mypass@mycam5:8888/stream"
                         }
                     ]
