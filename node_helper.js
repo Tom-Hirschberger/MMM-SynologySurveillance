@@ -41,18 +41,18 @@ module.exports = NodeHelper.create({
   replaceUrlParts: function(url, newProtocol=null, newHost=null, newPort=null){
     let newUrl = new URL(url)
     if(newProtocol != null){
-      url.protocol = newProtocol
+      newUrl.protocol = newProtocol
     }
 
     if(newHost != null){
-      url.hostname = newHost
+      newUrl.hostname = newHost
     }
 
     if(newPort != null){
-      url.port = newPort
+      newUrl.port = newPort
     }
 
-    return encodeURI(newUrl.toString())
+    return newUrl.toString()
   },
 
   getInfoOfAllDs: async function(){
@@ -113,13 +113,18 @@ module.exports = NodeHelper.create({
         newPort = self.config.ds[dsIdx].port
       }
 
-      for (let camId in self.ds[dsIdx].camIds){
-        self.ds[dsIdx].infosPerId[camId].streamInfo = self.replaceUrlParts(
-                                                        self.ds[dsIdx].infosPerId[camId].streamInfo,
-                                                        newProtocol,
-                                                        newHost,
-                                                        newPort
-                                                      )
+      for (let camId of self.ds[dsIdx].infos.camIds){
+        let curStreamInfo = self.ds[dsIdx].infos.infosPerId[camId].streamInfo
+        let newStreamInfo = self.replaceUrlParts(
+                              curStreamInfo,
+                              newProtocol,
+                              newHost,
+                              newPort
+                            )
+        self.ds[dsIdx].infos.infosPerId[camId].streamInfo = newStreamInfo
+        if (self.config.debug){
+          console.log(self.name+": CamInfo "+self.ds[dsIdx].infos.camIdNameMapping[camId]+" -> "+self.ds[dsIdx].infos.infosPerId[camId].streamInfo)
+        }
       }
     }
 
