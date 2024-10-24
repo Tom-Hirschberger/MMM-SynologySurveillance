@@ -73,6 +73,21 @@ Module.register("MMM-SynologySurveillance", {
     } else {
       self.allModulesClasses = null
     }
+
+    for (let curDsIdx = 0; curDsIdx < self.config.ds.length; curDsIdx++) {
+      for (
+        let curCamIdx = 0;
+        curCamIdx < self.config.ds[curDsIdx].cams.length;
+        curCamIdx++
+      ) {
+        if (self.config.ds[curDsIdx].protocol === "mjpeg" && (typeof self.config.ds[curDsIdx].cams[curCamIdx].name === "undefined")){
+          if (typeof self.config.ds[curDsIdx].cams[curCamIdx].alias !== "undefined"){
+            console.log(self.name+": WARNING: name of cam "+curCamIdx+" of ds "+curDsIdx+" is not set but the alias. Using the alias instead")
+            self.config.ds[curDsIdx].cams[curCamIdx].name = self.config.ds[curDsIdx].cams[curCamIdx].alias
+          }
+        }
+      }
+    }
     
     if (self.config.order !== null) {
       let nameDsCamIdxMap = {}
