@@ -1,0 +1,6 @@
+/* force all the protocol sensitive fields to hidden,
+   extension.js will show as appropriate at startup,
+   protocol field onChange handler will do it live
+.m_MMM-SynologySurveillance [class$='real'], [class$='dummy'] {
+	display:none;
+}
