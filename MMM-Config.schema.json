@@ -232,10 +232,7 @@
             "order": {
               "type":"array",
               "items": {
-                "type": "string",
-                "enum":[
-                  "none"
-                ]
+                "type": "string"
               }
             },
             "noUrlIcon": {
