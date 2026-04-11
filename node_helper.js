@@ -76,7 +76,7 @@ module.exports = NodeHelper.create({
         } else {
           self.ds[dsIdx].infos = await self.ds[dsIdx].client.getStreamInfoOfAllCams(true)
         }
-        
+
       } catch (getInfosErr) {
         if ((typeof getInfosErr.returnCode !== "undefined") && (getInfosErr.returnCode === 105)){
           if (self.config.debug){
@@ -103,7 +103,7 @@ module.exports = NodeHelper.create({
       let newProtocol = null
       let newHost = null
       let newPort = null
-      
+
       if (self.ds[dsIdx].replaceHostPart){
         newProtocol = self.config.ds[dsIdx].protocol
         newHost = self.config.ds[dsIdx].host
@@ -113,18 +113,27 @@ module.exports = NodeHelper.create({
         newPort = self.config.ds[dsIdx].port
       }
 
+	  let curCamIdx = 0;
       for (let camId of self.ds[dsIdx].infos.camIds){
         let curStreamInfo = self.ds[dsIdx].infos.infosPerId[camId].streamInfo
+
+		let curHost = newHost
+		if (typeof self.config.ds[dsIdx].hostAliases !== "undefined"){
+			let aliases = [newHost, ...self.config.ds[dsIdx].hostAliases]
+			curHost = aliases[curCamIdx % aliases.length]
+		}
+
         let newStreamInfo = self.replaceUrlParts(
                               curStreamInfo,
                               newProtocol,
-                              newHost,
+                              curHost,
                               newPort
                             )
         self.ds[dsIdx].infos.infosPerId[camId].streamInfo = newStreamInfo
         if (self.config.debug){
           console.log(self.name+": CamInfo "+self.ds[dsIdx].infos.camIdNameMapping[camId]+" -> "+self.ds[dsIdx].infos.infosPerId[camId].streamInfo)
         }
+		curCamIdx++
       }
     }
 
@@ -196,7 +205,7 @@ module.exports = NodeHelper.create({
     if ((typeof self.config !== "undefined") && (self.config.debug)) {
       console.log(self.name + ": Received notification " + notification)
     }
-    
+
     if (notification === "CONFIG" && self.started === false) {
       self.config = payload
 

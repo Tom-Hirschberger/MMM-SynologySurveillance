@@ -102,6 +102,7 @@ As of version 0.2.0 of the module the option "skipOnPrivilegeError" is not used 
 | password             | The password used for the login | String | Empty/true |
 | cams                 | The array containing the information about the cams to query | Array | Empty/true |
 | replaceHostPart      | If this option is set to true the host and protocol part in the stream url will be replaced with the values of the config file. I introduce this option because i access my cam with an public url (dynamic dns) but the DiskStation returns the private ip of the camera in the result. | Boolean | false |
+| hostAliases          | Electron limits the simulationious persistent connections to one host to 6. If you have more then 4 cams at the same disk station this may lead to problems. The only way to solve this is by adding aliases for the same host to your DNS or /etc/hosts file and configure a array with this aliases with this option. The host parts in the results will then be replaced round robin with this elments | Array of Strings | Null |
 | replacePortPart      | If this option is set to true the prort part in the stream url will be replaced with the values of the config file. I introduce this option because i access my cam with https (port 50001)) but the DiskStation returns port of http (5000). | Boolean | false |
 
 #### Dummie
